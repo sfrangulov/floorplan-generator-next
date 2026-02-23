@@ -187,7 +187,7 @@ FURNITURE_SIZES: dict[FurnitureType, tuple[float, float, float]] = {
     FurnitureType.ARMCHAIR: (850.0, 850.0, 770.0),
     FurnitureType.COFFEE_TABLE: (1000.0, 600.0, 400.0),
     FurnitureType.TV_STAND: (1500.0, 425.0, 500.0),
-    FurnitureType.SHELVING: (1200.0, 375.0, 2000.0),
+    FurnitureType.SHELVING: (1200.0, 375.0, 1900.0),
     # Bedroom
     FurnitureType.BED_SINGLE: (900.0, 2000.0, 500.0),
     FurnitureType.BED_DOUBLE: (1600.0, 2000.0, 500.0),

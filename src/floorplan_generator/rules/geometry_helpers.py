@@ -41,24 +41,26 @@ def distance_to_window(item_bbox: Rectangle, window_pos: Point, room: Room) -> f
 
 
 def clearance_in_front(item: FurnitureItem, room: Room) -> float:
-    """Distance from front edge of furniture to nearest wall or furniture."""
+    """Distance from front edge of furniture to far wall or furniture ahead.
+
+    Measures in the +y direction from the front edge of the item
+    to the opposite wall (room bounding box top) or to furniture ahead.
+    """
     bb = item.bounding_box
-    front_center = Point(x=bb.x + bb.width / 2, y=bb.y + bb.height)
-    # Distance to walls
-    segs = wall_segments(room)
-    min_d = float("inf")
-    for s in segs:
-        d = min_distance_point_to_segment(front_center, s)
-        min_d = min(min_d, d)
-    # Distance to other furniture
+    front_y = bb.y + bb.height
+    # Distance to the far wall (top of room bounding box)
+    room_bb = room.boundary.bounding_box
+    min_d = (room_bb.y + room_bb.height) - front_y
+    # Distance to other furniture in front
     for other in room.furniture:
         if other.id == item.id:
             continue
         other_bb = other.bounding_box
-        d = bb.distance_to(other_bb)
         # Only count items in front direction (higher y)
-        if other_bb.y >= bb.y + bb.height - 1:
-            min_d = min(min_d, d)
+        if other_bb.y >= front_y - 1:
+            d = other_bb.y - front_y
+            if d >= 0:
+                min_d = min(min_d, d)
     return min_d
 
 
