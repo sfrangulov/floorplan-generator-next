@@ -631,3 +631,27 @@ def test_wall_opening_for_door():
     # The shared vertical wall has a door gap, so wall is split into pieces
     # Plus other wall segments. More rects than a simple 2-room layout without door.
     assert len(rects) >= 6, f"Expected split wall rects due to door, got {len(rects)}"
+
+
+# R32
+def test_door_has_leaf_rect_and_arc():
+    """Door renders as leaf rect + arc path (no white gap rect)."""
+    door = Door(
+        id="d1", position=Point(x=3000, y=500), width=800.0,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
+        room_from="r1", room_to="r2", wall_orientation="vertical",
+    )
+    r1 = _make_room(RoomType.HALLWAY, 0, 0, 3000, 2000, room_id="r1", doors=[door])
+    result = _make_result([r1])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    rects = [r for r in floor.findall("svg:rect", ns)]
+    paths = [p for p in floor.findall("svg:path", ns)]
+    # We should have at least one path (arc) for the door
+    assert len(paths) >= 1, "Expected arc path for door"
+    # At least one rect that is the door leaf (much thinner than wall rects)
+    # Leaf is ~40mm scaled (~25px), wall rects are ~142px thick
+    thin_rects = [r for r in rects if float(r.get("width", "999")) < 50 or float(r.get("height", "999")) < 50]
+    assert len(thin_rects) >= 1, "Expected thin door leaf rect"
