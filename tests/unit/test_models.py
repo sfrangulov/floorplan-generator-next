@@ -9,6 +9,8 @@ from floorplan_generator.core.enums import (
     RoomType,
     SwingDirection,
 )
+from floorplan_generator.core.geometry import Point
+from floorplan_generator.core.models import Door
 
 
 # M01
@@ -160,3 +162,48 @@ def test_room_free_area_ratio(make_room, make_furniture):
     # Room = 4*5 = 20 m², furniture = 1.6*2.0 = 3.2 m²
     # Free ratio = 1 - 3.2/20 = 0.84
     assert room.free_area_ratio == pytest.approx(0.84)
+
+
+# M15
+def test_swing_arc_inward_vertical():
+    """INWARD swing on vertical wall: arc extends to the right of door."""
+    door = Door(
+        id="d1", position=Point(x=2000, y=500), width=800,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
+        room_from="a", room_to="b", wall_orientation="vertical",
+    )
+    arc = door.swing_arc
+    assert arc.x == 2000
+    assert arc.y == 500
+    assert arc.width == 800
+    assert arc.height == 800
+
+
+# M16
+def test_swing_arc_outward_vertical():
+    """OUTWARD swing on vertical wall: arc extends to the left of door."""
+    door = Door(
+        id="d2", position=Point(x=2000, y=500), width=800,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.OUTWARD,
+        room_from="a", room_to="b", wall_orientation="vertical",
+    )
+    arc = door.swing_arc
+    assert arc.x == 2000 - 800
+    assert arc.y == 500
+    assert arc.width == 800
+    assert arc.height == 800
+
+
+# M17
+def test_swing_arc_outward_horizontal():
+    """OUTWARD swing on horizontal wall: arc extends upward."""
+    door = Door(
+        id="d3", position=Point(x=500, y=3000), width=800,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.OUTWARD,
+        room_from="a", room_to="b", wall_orientation="horizontal",
+    )
+    arc = door.swing_arc
+    assert arc.x == 500
+    assert arc.y == 3000 - 800
+    assert arc.width == 800
+    assert arc.height == 800

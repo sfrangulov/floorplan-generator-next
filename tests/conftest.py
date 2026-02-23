@@ -93,6 +93,7 @@ def make_door():
         room_from: str = "room_a",
         room_to: str = "room_b",
         position: Point | None = None,
+        wall_orientation: str = "vertical",
     ) -> Door:
         return Door(
             id=_uid(),
@@ -102,6 +103,7 @@ def make_door():
             swing=swing,
             room_from=room_from,
             room_to=room_to,
+            wall_orientation=wall_orientation,
         )
 
     return _factory

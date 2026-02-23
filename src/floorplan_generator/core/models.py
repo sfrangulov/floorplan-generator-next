@@ -43,20 +43,31 @@ class Door(BaseModel):
     swing: SwingDirection
     room_from: str
     room_to: str
+    wall_orientation: str = "vertical"
 
     @computed_field
     @property
     def swing_arc(self) -> Rectangle:
         """Rectangle representing the door sweep area.
 
-        The arc is a square with side = door width, positioned at the door.
+        The arc is a square with side = door width.
+        For vertical walls, OUTWARD swings offset to the left (negative x).
+        For horizontal walls, OUTWARD swings offset upward (negative y).
         """
-        return Rectangle(
-            x=self.position.x,
-            y=self.position.y,
-            width=self.width,
-            height=self.width,
-        )
+        if self.wall_orientation == "vertical":
+            x = (
+                self.position.x - self.width
+                if self.swing == SwingDirection.OUTWARD
+                else self.position.x
+            )
+            return Rectangle(x=x, y=self.position.y, width=self.width, height=self.width)
+        else:
+            y = (
+                self.position.y - self.width
+                if self.swing == SwingDirection.OUTWARD
+                else self.position.y
+            )
+            return Rectangle(x=self.position.x, y=y, width=self.width, height=self.width)
 
 
 class FurnitureItem(BaseModel):
