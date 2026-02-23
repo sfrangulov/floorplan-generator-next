@@ -21,6 +21,10 @@ class WallTheme(BaseModel):
     outer_width: float = 4.0
     inner_stroke: str = "#000000"
     inner_width: float = 1.5
+    outer_fill: str = "#000000"
+    inner_fill: str = "#000000"
+    outer_thickness: float = 225.0
+    inner_thickness: float = 100.0
 
 
 class RoomTheme(BaseModel):
@@ -59,9 +63,9 @@ class RiserTheme(BaseModel):
 
 class TextTheme(BaseModel):
     font_family: str = "Arial, sans-serif"
-    font_size: int = 14
+    font_size: int = 28
     fill: str = "#333333"
-    area_font_size: int = 11
+    area_font_size: int = 20
 
 
 class Theme(BaseModel):

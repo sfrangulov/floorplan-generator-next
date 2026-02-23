@@ -552,3 +552,23 @@ def test_sofa_has_cushion_lines():
     elements = list(g.elements)
     # Should have more than 2 elements (backrest + seat + armrests + cushion lines)
     assert len(elements) >= 5, f"Sofa should have >= 5 elements, got {len(elements)}"
+
+
+# R26
+def test_theme_has_wall_thickness():
+    """Theme includes wall thickness and fill fields."""
+    theme = load_theme("blueprint")
+    assert hasattr(theme.walls, "outer_thickness")
+    assert hasattr(theme.walls, "inner_thickness")
+    assert hasattr(theme.walls, "outer_fill")
+    assert hasattr(theme.walls, "inner_fill")
+    assert theme.walls.outer_thickness == 225.0
+    assert theme.walls.inner_thickness == 100.0
+
+
+# R27
+def test_theme_text_sizes_large():
+    """Theme text sizes are large enough for 2000px canvas."""
+    theme = load_theme("colored")
+    assert theme.text.font_size >= 28
+    assert theme.text.area_font_size >= 20

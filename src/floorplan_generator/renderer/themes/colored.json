@@ -9,7 +9,11 @@
     "outer_stroke": "#37474F",
     "outer_width": 4.0,
     "inner_stroke": "#546E7A",
-    "inner_width": 1.5
+    "inner_width": 1.5,
+    "outer_fill": "#37474F",
+    "inner_fill": "#78909C",
+    "outer_thickness": 225.0,
+    "inner_thickness": 100.0
   },
   "rooms": {
     "default_fill": "#F5F5F5",
@@ -60,8 +64,8 @@
   },
   "text": {
     "font_family": "Arial, sans-serif",
-    "font_size": 14,
+    "font_size": 28,
     "fill": "#263238",
-    "area_font_size": 11
+    "area_font_size": 20
   }
 }
