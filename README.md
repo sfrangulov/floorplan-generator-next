@@ -7,7 +7,7 @@ Procedurally generates realistic floor plans for typical Russian apartments (к�
 ## Features
 
 - **Generation pipeline** — two-phase Greedy + CSP algorithm produces complete furnished layouts
-- **SVG rendering** — layered output with rooms, walls, doors, windows, furniture, and stoyaks (стояки)
+- **SVG rendering** — layered output with rooms, walls, doors, windows, furniture, and risers (стояки)
 - **Themes** — built-in `blueprint` and `colored` themes; bring your own via custom JSON
 - **66 validation rules** — 34 planning rules (P01–P34) and 32 furniture rules (F01–F32) based on Russian GOST/SNiP standards and Neufert ergonomics
 - **4 apartment classes** — Economy (экономкласс), Comfort (комфорт), Business (бизнес), Premium (премиум)
@@ -76,9 +76,9 @@ Compose → Greedy → CSP → Validate → Render
 
 1. **Compose** — determines room composition and sizes based on apartment class and room count
 2. **Greedy layout** — places rooms on a canvas using priority-based sequential attachment with scoring (adjacency, zoning, external walls)
-3. **CSP solver** — fills in details via constraint satisfaction: doors on shared walls, windows on external walls, stoyaks in wet zones, furniture with backtracking placement
+3. **CSP solver** — fills in details via constraint satisfaction: doors on shared walls, windows on external walls, risers in wet zones, furniture with backtracking placement
 4. **Validate** — checks the result against 66 mandatory and recommended rules (P01–P34 planning, F01–F32 furniture); retries if too many violations
-5. **Render** — produces layered SVG: background → room fills → furniture → walls → doors → windows → stoyaks
+5. **Render** — produces layered SVG: background → room fills → furniture → walls → doors → windows → risers
 
 ## Project Structure
 
@@ -110,7 +110,7 @@ src/floorplan_generator/
 │       ├── solver.py         # CSP orchestrator
 │       ├── door_placer.py    # Door placement on shared walls
 │       ├── window_placer.py  # Window placement on external walls
-│       ├── stoyak_placer.py  # Water pipe placement
+│       ├── riser_placer.py  # Riser placement
 │       ├── furniture_placer.py # Furniture with backtracking
 │       └── constraints.py    # CSP constraint definitions
 └── renderer/
@@ -122,7 +122,7 @@ src/floorplan_generator/
     ├── door_renderer.py      # Doors with swing arcs
     ├── window_renderer.py    # Window markers
     ├── furniture_renderer.py # Furniture shapes
-    ├── stoyak_renderer.py    # Water pipe circles
+    ├── riser_renderer.py    # Riser pipe circles
     └── themes/
         ├── blueprint.json    # Black & white architectural style
         └── colored.json      # Material Design colors per room type
@@ -155,7 +155,7 @@ Theme JSON structure:
   "doors": { "stroke": "#000000" },
   "windows": { "stroke": "#000000", "fill": "#FFFFFF" },
   "furniture": { "stroke": "#000000", "fill": "none" },
-  "stoyak": { "stroke": "#000000", "fill": "#000000", "radius": 3.0 }
+  "riser": { "stroke": "#000000", "fill": "#000000", "radius": 3.0 }
 }
 ```
 

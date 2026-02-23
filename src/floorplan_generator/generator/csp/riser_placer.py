@@ -1,4 +1,4 @@
-"""Stoyak placement in wet zones."""
+"""Riser placement in wet zones."""
 
 from __future__ import annotations
 
@@ -7,15 +7,15 @@ import uuid
 
 from floorplan_generator.core.geometry import Point, Rectangle
 from floorplan_generator.core.models import Room
-from floorplan_generator.generator.types import Stoyak
+from floorplan_generator.generator.types import Riser
 
 
-def place_stoyaks(
+def place_risers(
     rooms: list[Room],
     canvas: Rectangle,
     rng: random.Random,
-) -> list[Stoyak]:
-    """Place stoyaks at corners of wet zone rooms.
+) -> list[Riser]:
+    """Place risers at corners of wet zone rooms.
 
     Prefers a shared corner between multiple wet zones.
     """
@@ -46,10 +46,10 @@ def place_stoyaks(
     if not sorted_corners:
         return []
 
-    # Place stoyak at best corner
+    # Place riser at best corner
     best = sorted_corners[0][0]
-    stoyak = Stoyak(
+    riser = Riser(
         id=uuid.uuid4().hex[:8],
         position=Point(x=best[0], y=best[1]),
     )
-    return [stoyak]
+    return [riser]

@@ -17,8 +17,8 @@ from floorplan_generator.core.models import Door, FurnitureItem, Room
 from floorplan_generator.generator.csp.constraints import violates_hard_constraints
 from floorplan_generator.generator.csp.door_placer import place_doors
 from floorplan_generator.generator.csp.furniture_placer import place_furniture
+from floorplan_generator.generator.csp.riser_placer import place_risers
 from floorplan_generator.generator.csp.solver import csp_solve
-from floorplan_generator.generator.csp.stoyak_placer import place_stoyaks
 from floorplan_generator.generator.csp.window_placer import place_windows
 from floorplan_generator.generator.types import SharedWall
 
@@ -208,20 +208,20 @@ def test_window_area_sufficient():
 
 
 # CS08
-def test_stoyak_in_wet_zone():
-    """Stoyak is placed in or adjacent to wet zone."""
+def test_riser_in_wet_zone():
+    """Riser is placed in or adjacent to wet zone."""
     rooms, shared_walls, canvas = _simple_topology()
     rng = random.Random(42)
-    stoyaks = place_stoyaks(rooms, canvas, rng)
-    assert len(stoyaks) >= 1
-    for stoyak in stoyaks:
+    risers = place_risers(rooms, canvas, rng)
+    assert len(risers) >= 1
+    for riser in risers:
         in_wet = False
         for room in rooms:
             if room.room_type.is_wet_zone:
                 bb = room.boundary.bounding_box
                 if (
-                    bb.x - 1 <= stoyak.position.x <= bb.x + bb.width + 1
-                    and bb.y - 1 <= stoyak.position.y <= bb.y + bb.height + 1
+                    bb.x - 1 <= riser.position.x <= bb.x + bb.width + 1
+                    and bb.y - 1 <= riser.position.y <= bb.y + bb.height + 1
                 ):
                     in_wet = True
                     break
@@ -229,12 +229,12 @@ def test_stoyak_in_wet_zone():
 
 
 # CS09
-def test_toilet_near_stoyak():
-    """Toilet bowl is placed <= 1000mm from stoyak (F32)."""
+def test_toilet_near_riser():
+    """Toilet bowl is placed <= 1000mm from riser (F32)."""
     rooms, shared_walls, canvas = _simple_topology()
     rng = random.Random(42)
-    stoyaks = place_stoyaks(rooms, canvas, rng)
-    assert len(stoyaks) >= 1
+    risers = place_risers(rooms, canvas, rng)
+    assert len(risers) >= 1
 
 
 # CS10
@@ -244,7 +244,7 @@ def test_furniture_no_overlap():
     rng = random.Random(42)
     furniture = place_furniture(
         room, [FurnitureType.BED_DOUBLE, FurnitureType.WARDROBE_SLIDING],
-        doors=[], stoyaks=[], rng=rng,
+        doors=[], risers=[], rng=rng,
     )
     if furniture is not None:
         for i, a in enumerate(furniture):
@@ -260,7 +260,7 @@ def test_furniture_inside_room():
     rng = random.Random(42)
     furniture = place_furniture(
         room, [FurnitureType.STOVE, FurnitureType.KITCHEN_SINK, FurnitureType.FRIDGE],
-        doors=[], stoyaks=[], rng=rng,
+        doors=[], risers=[], rng=rng,
     )
     if furniture is not None:
         room_bb = room.boundary.bounding_box
@@ -288,7 +288,7 @@ def test_furniture_not_blocking_door():
     rng = random.Random(42)
     furniture = place_furniture(
         room, [FurnitureType.BED_DOUBLE, FurnitureType.WARDROBE_SLIDING],
-        doors=[door], stoyaks=[], rng=rng,
+        doors=[door], risers=[], rng=rng,
     )
     if furniture is not None:
         for item in furniture:
@@ -302,7 +302,7 @@ def test_passage_700mm():
     rng = random.Random(42)
     furniture = place_furniture(
         room, [FurnitureType.SOFA_3, FurnitureType.TV_STAND],
-        doors=[], stoyaks=[], rng=rng,
+        doors=[], risers=[], rng=rng,
     )
     if furniture is not None and len(furniture) >= 1:
         assert True  # Passage check done internally by placer
@@ -315,7 +315,7 @@ def test_forward_checking_prunes():
     rng = random.Random(42)
     furniture = place_furniture(
         room, [FurnitureType.BATHTUB, FurnitureType.SINK],
-        doors=[], stoyaks=[], rng=rng,
+        doors=[], risers=[], rng=rng,
     )
     if furniture is not None:
         assert len(furniture) == 2
@@ -457,7 +457,7 @@ def test_furniture_skip_unfittable():
     rng = random.Random(42)
     furniture = place_furniture(
         room, [FurnitureType.WARDROBE_SLIDING, FurnitureType.NIGHTSTAND],
-        doors=[door], stoyaks=[], rng=rng,
+        doors=[door], risers=[], rng=rng,
     )
     assert furniture is not None
 

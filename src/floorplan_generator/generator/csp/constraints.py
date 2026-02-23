@@ -5,7 +5,7 @@ from __future__ import annotations
 from floorplan_generator.core.enums import FurnitureType
 from floorplan_generator.core.geometry import Rectangle
 from floorplan_generator.core.models import Door, FurnitureItem, Room
-from floorplan_generator.generator.types import Stoyak
+from floorplan_generator.generator.types import Riser
 
 # Minimum clearance in front of furniture items (mm)
 _FRONT_CLEARANCES: dict[FurnitureType, float] = {
@@ -27,7 +27,7 @@ def violates_hard_constraints(
     room: Room,
     placed: list[FurnitureItem],
     doors: list[Door],
-    stoyaks: list[Stoyak] | None = None,
+    risers: list[Riser] | None = None,
 ) -> bool:
     """Check if placing this item violates any hard constraint."""
     bb = item.bounding_box

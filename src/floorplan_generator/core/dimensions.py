@@ -259,7 +259,7 @@ CLEARANCES: dict[str, float] = {
     "entry_zone_depth": 800.0,
     # Appliances
     "washer_back_gap": 50.0,
-    "toilet_stoyak_max": 1000.0,
+    "toilet_riser_max": 1000.0,
 }
 
 # --- Kitchen triangle (mm) ---

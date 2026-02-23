@@ -58,7 +58,7 @@ def generate_apartment(
         if greedy_result is None or not greedy_result.success:
             continue
 
-        # CSP: doors, windows, stoyaks, furniture
+        # CSP: doors, windows, risers, furniture
         csp_rng = random.Random(current_seed + 500)
         csp_result = csp_solve(
             greedy_result.rooms,
@@ -80,7 +80,7 @@ def generate_apartment(
 
         result = GenerationResult(
             apartment=apartment,
-            stoyaks=[],
+            risers=[],
             restart_count=restart,
             seed_used=current_seed,
             recommended_violations=csp_result.soft_violations,

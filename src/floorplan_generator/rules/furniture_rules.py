@@ -980,10 +980,10 @@ class F31WasherBackGap(RuleValidator):
         return self._pass("Washer gap OK")
 
 
-class F32ToiletStoyakDistance(RuleValidator):
+class F32ToiletRiserDistance(RuleValidator):
     rule_id = "F32"
-    name = "Toilet-stoyak distance"
-    description = "Toilet to stoyak <= 1000 mm"
+    name = "Toilet-riser distance"
+    description = "Toilet to riser <= 1000 mm"
     is_mandatory = True
     regulatory_basis = "SP"
 
@@ -996,17 +996,17 @@ class F32ToiletStoyakDistance(RuleValidator):
             for toilet in items_of_type(
                 room, FurnitureType.TOILET_BOWL,
             ):
-                stoyak = room.boundary.points[0]
+                riser = room.boundary.points[0]
                 tc = toilet.bounding_box.center
-                dist = tc.distance_to(stoyak)
-                mx = CLEARANCES["toilet_stoyak_max"]
+                dist = tc.distance_to(riser)
+                mx = CLEARANCES["toilet_riser_max"]
                 if dist > mx:
                     return self._fail(
-                        f"Toilet-stoyak "
+                        f"Toilet-riser "
                         f"{dist:.0f} mm > 1000 mm",
                         {
                             "toilet_id": toilet.id,
                             "distance": dist,
                         },
                     )
-        return self._pass("Toilet-stoyak OK")
+        return self._pass("Toilet-riser OK")

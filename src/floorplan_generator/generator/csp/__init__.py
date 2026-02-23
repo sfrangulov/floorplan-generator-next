@@ -1,1 +1,1 @@
-"""CSP micro-level solver for doors, windows, stoyaks, furniture."""
+"""CSP micro-level solver for doors, windows, risers, furniture."""

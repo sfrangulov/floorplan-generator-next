@@ -51,7 +51,7 @@ class FurnitureTheme(BaseModel):
     fill: str = "none"
 
 
-class StoyakTheme(BaseModel):
+class RiserTheme(BaseModel):
     stroke: str = "#000000"
     fill: str = "#000000"
     radius: float = 3.0
@@ -74,7 +74,7 @@ class Theme(BaseModel):
     doors: DoorTheme = DoorTheme()
     windows: WindowTheme = WindowTheme()
     furniture: FurnitureTheme = FurnitureTheme()
-    stoyak: StoyakTheme = StoyakTheme()
+    riser: RiserTheme = RiserTheme()
     text: TextTheme = TextTheme()
 
 

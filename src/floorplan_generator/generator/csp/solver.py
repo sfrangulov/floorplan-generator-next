@@ -1,4 +1,4 @@
-"""CSP solver orchestrator: doors -> windows -> stoyaks -> furniture."""
+"""CSP solver orchestrator: doors -> windows -> risers -> furniture."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from floorplan_generator.core.geometry import Rectangle
 from floorplan_generator.core.models import Room
 from floorplan_generator.generator.csp.door_placer import place_doors
 from floorplan_generator.generator.csp.furniture_placer import place_furniture
-from floorplan_generator.generator.csp.stoyak_placer import place_stoyaks
+from floorplan_generator.generator.csp.riser_placer import place_risers
 from floorplan_generator.generator.csp.window_placer import place_windows
 from floorplan_generator.generator.room_composer import get_furniture_list
 from floorplan_generator.generator.types import CSPResult, SharedWall
@@ -22,7 +22,7 @@ def csp_solve(
     apartment_class: ApartmentClass,
     rng: random.Random,
 ) -> CSPResult:
-    """Run CSP solver: doors -> windows -> stoyaks -> furniture."""
+    """Run CSP solver: doors -> windows -> risers -> furniture."""
     # Step 1: Place doors
     door_results = place_doors(rooms, shared_walls, rng)
 
@@ -43,8 +43,8 @@ def csp_solve(
         if rid in room_windows:
             room_windows[rid].append(wr["window"])
 
-    # Step 3: Place stoyaks
-    stoyaks = place_stoyaks(rooms, canvas, rng)
+    # Step 3: Place risers
+    risers = place_risers(rooms, canvas, rng)
 
     # Step 4: Place furniture in each room
     updated_rooms = []
@@ -57,7 +57,7 @@ def csp_solve(
 
         doors_for_room = room_doors.get(room.id, [])
         furniture = place_furniture(
-            room, furniture_list, doors_for_room, stoyaks, rng,
+            room, furniture_list, doors_for_room, risers, rng,
         )
 
         if furniture is None:

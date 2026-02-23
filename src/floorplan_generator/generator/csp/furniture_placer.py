@@ -11,7 +11,7 @@ from floorplan_generator.core.enums import FurnitureType
 from floorplan_generator.core.geometry import Point, Rectangle
 from floorplan_generator.core.models import Door, FurnitureItem, Room
 from floorplan_generator.generator.csp.constraints import violates_hard_constraints
-from floorplan_generator.generator.types import Stoyak
+from floorplan_generator.generator.types import Riser
 
 
 def _generate_wall_positions(
@@ -66,7 +66,7 @@ def place_furniture(
     room: Room,
     furniture_types: list[FurnitureType],
     doors: list[Door],
-    stoyaks: list[Stoyak],
+    risers: list[Riser],
     rng: random.Random,
     step: float = 50.0,
 ) -> list[FurnitureItem] | None:
@@ -85,7 +85,7 @@ def place_furniture(
     room_bb = room.boundary.bounding_box
 
     return _backtrack(
-        sorted_types, 0, [], room, room_bb, doors, stoyaks, rng, step,
+        sorted_types, 0, [], room, room_bb, doors, risers, rng, step,
     )
 
 
@@ -96,7 +96,7 @@ def _backtrack(
     room: Room,
     room_bb: Rectangle,
     doors: list[Door],
-    stoyaks: list[Stoyak],
+    risers: list[Riser],
     rng: random.Random,
     step: float,
 ) -> list[FurnitureItem] | None:
@@ -108,7 +108,7 @@ def _backtrack(
     if ft not in FURNITURE_SIZES:
         # Skip unknown furniture, continue with rest
         return _backtrack(
-            items, index + 1, placed, room, room_bb, doors, stoyaks, rng, step,
+            items, index + 1, placed, room, room_bb, doors, risers, rng, step,
         )
 
     w, d, _ = FURNITURE_SIZES[ft]
@@ -125,7 +125,7 @@ def _backtrack(
             rotation=rotation,
         )
 
-        if violates_hard_constraints(item, room, placed, doors, stoyaks):
+        if violates_hard_constraints(item, room, placed, doors, risers):
             continue
 
         placed.append(item)
@@ -147,7 +147,7 @@ def _backtrack(
                         rotation=nr,
                     )
                     if not violates_hard_constraints(
-                        ni, room, placed, doors, stoyaks,
+                        ni, room, placed, doors, risers,
                     ):
                         has_valid = True
                         break
@@ -156,7 +156,7 @@ def _backtrack(
                     continue
 
         result = _backtrack(
-            items, index + 1, placed, room, room_bb, doors, stoyaks, rng, step,
+            items, index + 1, placed, room, room_bb, doors, risers, rng, step,
         )
         if result is not None:
             return result
@@ -166,5 +166,5 @@ def _backtrack(
     # If no valid position found for this item, skip it and continue
     # with remaining items rather than failing the entire room.
     return _backtrack(
-        items, index + 1, placed, room, room_bb, doors, stoyaks, rng, step,
+        items, index + 1, placed, room, room_bb, doors, risers, rng, step,
     )

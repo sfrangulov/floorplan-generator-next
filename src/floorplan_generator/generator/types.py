@@ -85,8 +85,8 @@ class CSPResult(BaseModel):
     reason: str = ""
 
 
-class Stoyak(BaseModel):
-    """Water supply/drain stoyak (vertical pipe)."""
+class Riser(BaseModel):
+    """Water supply/drain riser (vertical pipe)."""
 
     id: str
     position: Point
@@ -97,7 +97,7 @@ class GenerationResult(BaseModel):
     """Complete result of a single apartment generation."""
 
     apartment: Apartment
-    stoyaks: list[Stoyak] = []
+    risers: list[Riser] = []
     restart_count: int
     seed_used: int
     recommended_violations: int

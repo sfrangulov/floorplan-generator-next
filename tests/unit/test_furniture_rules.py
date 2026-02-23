@@ -1,5 +1,12 @@
 """Unit tests for furniture rules (F01-F32)."""
 
+from floorplan_generator.core.enums import (
+    ApartmentClass,
+    DoorType,
+    FurnitureType,
+    RoomType,
+)
+from floorplan_generator.core.geometry import Point
 from floorplan_generator.rules.furniture_rules import (
     F01ToiletCenterFromWall,
     F02ToiletFrontClearance,
@@ -32,16 +39,8 @@ from floorplan_generator.rules.furniture_rules import (
     F29ArmchairSeatWidth,
     F30EntryZone,
     F31WasherBackGap,
-    F32ToiletStoyakDistance,
+    F32ToiletRiserDistance,
 )
-
-from floorplan_generator.core.enums import (
-    ApartmentClass,
-    DoorType,
-    FurnitureType,
-    RoomType,
-)
-from floorplan_generator.core.geometry import Point
 from floorplan_generator.rules.rule_engine import RuleStatus
 
 FT = FurnitureType
@@ -1188,10 +1187,10 @@ def test_f31_washer_gap_20_fail(
     assert result.status == RuleStatus.FAIL
 
 
-# --- F32: Toilet-stoyak distance ---
+# --- F32: Toilet-riser distance ---
 
 
-def test_f32_toilet_stoyak_800_pass(
+def test_f32_toilet_riser_800_pass(
     make_room, make_furniture, make_apartment,
 ):
     toilet = make_furniture(
@@ -1202,11 +1201,11 @@ def test_f32_toilet_stoyak_800_pass(
         make_room, make_apartment,
         RT.TOILET, 1.5, 2.0, [toilet],
     )
-    result = F32ToiletStoyakDistance().validate(apt)
+    result = F32ToiletRiserDistance().validate(apt)
     assert result.status == RuleStatus.PASS
 
 
-def test_f32_toilet_stoyak_1500_fail(
+def test_f32_toilet_riser_1500_fail(
     make_room, make_furniture, make_apartment,
 ):
     toilet = make_furniture(
@@ -1217,5 +1216,5 @@ def test_f32_toilet_stoyak_1500_fail(
         make_room, make_apartment,
         RT.TOILET, 3.0, 3.0, [toilet],
     )
-    result = F32ToiletStoyakDistance().validate(apt)
+    result = F32ToiletRiserDistance().validate(apt)
     assert result.status == RuleStatus.FAIL

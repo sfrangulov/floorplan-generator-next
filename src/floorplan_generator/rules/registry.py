@@ -35,7 +35,7 @@ from floorplan_generator.rules.furniture_rules import (
     F29ArmchairSeatWidth,
     F30EntryZone,
     F31WasherBackGap,
-    F32ToiletStoyakDistance,
+    F32ToiletRiserDistance,
 )
 from floorplan_generator.rules.planning_rules import (
     P01LivingRoomArea1Room,
@@ -182,7 +182,7 @@ _ALL_RULE_CLASSES: list[type[RuleValidator]] = [
     F29ArmchairSeatWidth,
     F30EntryZone,
     F31WasherBackGap,
-    F32ToiletStoyakDistance,
+    F32ToiletRiserDistance,
 ]
 
 

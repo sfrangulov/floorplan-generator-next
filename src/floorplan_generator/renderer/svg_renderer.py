@@ -7,8 +7,11 @@ from floorplan_generator.generator.types import GenerationResult
 from floorplan_generator.renderer.coordinate_mapper import CoordinateMapper
 from floorplan_generator.renderer.door_renderer import render_doors
 from floorplan_generator.renderer.furniture_renderer import render_furniture
-from floorplan_generator.renderer.room_renderer import compute_room_group_ids, render_rooms
-from floorplan_generator.renderer.stoyak_renderer import render_stoyaks
+from floorplan_generator.renderer.riser_renderer import render_risers
+from floorplan_generator.renderer.room_renderer import (
+    compute_room_group_ids,
+    render_rooms,
+)
 from floorplan_generator.renderer.theme import Theme, get_default_theme
 from floorplan_generator.renderer.wall_renderer import render_walls
 from floorplan_generator.renderer.window_renderer import render_windows
@@ -36,16 +39,16 @@ def render_svg(result: GenerationResult, theme: Theme | None = None) -> str:
     render_rooms(dwg, rooms, room_ids, mapper, theme)
 
     # Layer 3: Furniture
-    furniture_group = dwg.g(id="mebel")
+    furniture_group = dwg.g(id="furniture")
     render_furniture(dwg, furniture_group, rooms, mapper, theme)
     dwg.add(furniture_group)
 
-    # Layer 4: Floor (walls + doors + windows + stoyaks)
+    # Layer 4: Floor (walls + doors + windows + risers)
     floor_group = dwg.g(id="floor")
     render_walls(dwg, floor_group, rooms, mapper, theme)
     render_doors(dwg, floor_group, rooms, mapper, theme)
     render_windows(dwg, floor_group, rooms, mapper, theme)
-    render_stoyaks(dwg, floor_group, result.stoyaks, mapper, theme)
+    render_risers(dwg, floor_group, result.risers, mapper, theme)
     dwg.add(floor_group)
 
     return dwg.tostring()
