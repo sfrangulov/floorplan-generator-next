@@ -11,7 +11,7 @@ from floorplan_generator.core.models import Room, Window
 from floorplan_generator.rules.geometry_helpers import wall_segments
 
 # Standard window sizes (width in mm)
-_WINDOW_SIZES = [900, 1200, 1500, 1800]
+_WINDOW_SIZES = [600, 700, 900, 1200, 1500, 1800]
 _WINDOW_HEIGHT = 1500.0
 
 
@@ -31,7 +31,7 @@ def _external_wall_segments(
             or abs(mid.x - (canvas.x + canvas.width)) < eps
             or abs(mid.y - (canvas.y + canvas.height)) < eps
         )
-        if on_edge and seg.length >= 900:
+        if on_edge and seg.length >= 600:
             result.append(seg)
     return result
 
@@ -72,7 +72,7 @@ def place_windows(
                         width = w
                         break
 
-            if width > wall.length - 200:
+            if width > wall.length - 150:
                 continue
 
             # Center window on wall

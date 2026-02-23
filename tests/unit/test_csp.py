@@ -418,3 +418,27 @@ def test_door_swing_arc_matches_placer_arc():
                 width=door.width, height=door.width,
             )
         assert door.swing_arc == expected_arc
+
+
+# CS20
+def test_window_on_short_wall():
+    """Windows can be placed on walls as short as 700mm."""
+    room = _room_at(RoomType.KITCHEN, 0, 0, 800, 3000)
+    canvas = Rectangle(x=0, y=0, width=5000, height=5000)
+    rng = random.Random(42)
+    windows = place_windows([room], canvas, rng)
+    assert len(windows) >= 1, "Kitchen with 800mm external wall should get a window"
+
+
+# CS21
+def test_all_window_rooms_get_windows():
+    """All rooms requiring windows get at least one on the simple topology."""
+    rooms, shared_walls, canvas = _simple_topology()
+    rng = random.Random(42)
+    windows = place_windows(rooms, canvas, rng)
+    rooms_with_windows = {wr["room"].id for wr in windows}
+    for room in rooms:
+        if room.room_type.requires_window:
+            assert room.id in rooms_with_windows, (
+                f"{room.room_type} (id={room.id}) has no window"
+            )
