@@ -292,6 +292,304 @@ def draw_hood(
         g.add(Circle(center=(cx, cy), r=r_max * frac, **s))
 
 
+def draw_shower(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Shower: square tray + diagonal hatch lines + drain circle."""
+    s = _style(style)
+    # Outer tray
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Diagonal hatch lines (top-left to bottom-right direction)
+    n_lines = 6
+    for i in range(1, n_lines + 1):
+        frac = i / (n_lines + 1)
+        # Lines from left edge to bottom edge, then top edge to right edge
+        if frac <= 0.5:
+            g.add(Line(
+                start=(0, d * frac * 2),
+                end=(w * frac * 2, 0),
+                **s,
+            ))
+        else:
+            offset = (frac - 0.5) * 2
+            g.add(Line(
+                start=(w * offset, d),
+                end=(w, d * offset),
+                **s,
+            ))
+    # Drain circle (center)
+    g.add(Circle(center=(w * 0.5, d * 0.5), r=min(w, d) * 0.06, **s))
+
+
+def draw_double_sink(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Double sink: rect body + two oval basins side by side."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Left basin
+    g.add(Ellipse(
+        center=(w * 0.28, d * 0.55),
+        r=(w * 0.2, d * 0.3),
+        **s,
+    ))
+    # Right basin
+    g.add(Ellipse(
+        center=(w * 0.72, d * 0.55),
+        r=(w * 0.2, d * 0.3),
+        **s,
+    ))
+    # Faucet circles
+    g.add(Circle(center=(w * 0.28, d * 0.15), r=w * 0.03, **s))
+    g.add(Circle(center=(w * 0.72, d * 0.15), r=w * 0.03, **s))
+
+
+def draw_bidet(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Bidet: small oval bowl (like toilet without tank)."""
+    s = _style(style)
+    # Outer oval body
+    g.add(Ellipse(
+        center=(w / 2, d / 2),
+        r=(w * 0.45, d * 0.45),
+        **s,
+    ))
+    # Inner oval basin
+    g.add(Ellipse(
+        center=(w / 2, d * 0.55),
+        r=(w * 0.28, d * 0.3),
+        **s,
+    ))
+    # Faucet circle at top
+    g.add(Circle(center=(w / 2, d * 0.15), r=w * 0.05, **s))
+
+
+def draw_dryer(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Dryer: rect + control panel + front drum circle + vent circle."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Control panel strip at top
+    panel_h = d * 0.1
+    g.add(Rect(insert=(0, 0), size=(w, panel_h), **s))
+    # Front drum circle (centered below panel)
+    r_drum = min(w, d) * 0.35
+    cx, cy = w / 2, panel_h + (d - panel_h) / 2
+    g.add(Circle(center=(cx, cy), r=r_drum, **s))
+    # Vent circle inside drum
+    g.add(Circle(center=(cx, cy), r=r_drum * 0.3, **s))
+    # Small vent dots in control panel
+    g.add(Circle(center=(w * 0.75, panel_h * 0.5), r=panel_h * 0.25, **s))
+
+
+def draw_oven(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Oven: rect body + inner rect (door) + circle (window)."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Inner door rect (inset)
+    inset_x = w * 0.08
+    inset_top = d * 0.12
+    inset_bot = d * 0.08
+    g.add(Rect(
+        insert=(inset_x, inset_top),
+        size=(w - 2 * inset_x, d - inset_top - inset_bot),
+        **s,
+    ))
+    # Door window circle
+    g.add(Circle(
+        center=(w / 2, d * 0.55),
+        r=min(w, d) * 0.18,
+        **s,
+    ))
+    # Handle line at top of door
+    g.add(Line(
+        start=(w * 0.2, d * 0.06),
+        end=(w * 0.8, d * 0.06),
+        **s,
+    ))
+
+
+def draw_dishwasher(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Dishwasher: rect body + horizontal rack lines."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Control panel strip at top
+    panel_h = d * 0.08
+    g.add(Rect(insert=(0, 0), size=(w, panel_h), **s))
+    # Horizontal rack lines (3 racks)
+    for frac in [0.3, 0.55, 0.8]:
+        y = d * frac
+        g.add(Line(start=(w * 0.08, y), end=(w * 0.92, y), **s))
+    # Handle line
+    g.add(Line(
+        start=(w * 0.3, d * 0.04),
+        end=(w * 0.7, d * 0.04),
+        **s,
+    ))
+
+
+def draw_microwave(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Microwave: rect body + rounded inner rect (door) + control panel."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Door area (left ~75%)
+    door_w = w * 0.72
+    inset = min(w, d) * 0.08
+    g.add(Rect(
+        insert=(inset, inset),
+        size=(door_w - 2 * inset, d - 2 * inset),
+        rx=min(w, d) * 0.03, ry=min(w, d) * 0.03,
+        **s,
+    ))
+    # Control panel area (right ~25%) - vertical divider line
+    g.add(Line(start=(door_w, 0), end=(door_w, d), **s))
+    # Control panel buttons (small circles)
+    panel_cx = door_w + (w - door_w) / 2
+    for frac in [0.3, 0.5, 0.7]:
+        g.add(Circle(
+            center=(panel_cx, d * frac),
+            r=min(w, d) * 0.03,
+            **s,
+        ))
+
+
+def draw_bookshelf(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Bookshelf: rect with 4-5 horizontal shelf lines."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # 5 horizontal shelf lines
+    n_shelves = 5
+    for i in range(1, n_shelves + 1):
+        y = d * i / (n_shelves + 1)
+        g.add(Line(start=(0, y), end=(w, y), **s))
+
+
+def draw_shelving(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Shelving: rect with horizontal + vertical divisions (grid)."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Horizontal divisions (3 shelves)
+    n_rows = 3
+    for i in range(1, n_rows + 1):
+        y = d * i / (n_rows + 1)
+        g.add(Line(start=(0, y), end=(w, y), **s))
+    # Vertical divisions (2 columns)
+    n_cols = 2
+    for i in range(1, n_cols + 1):
+        x = w * i / (n_cols + 1)
+        g.add(Line(start=(x, 0), end=(x, d), **s))
+
+
+def draw_dresser(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Dresser: rect body + 3-4 horizontal drawer lines + small handle circles."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # 4 horizontal drawer divider lines
+    n_drawers = 4
+    for i in range(1, n_drawers + 1):
+        y = d * i / (n_drawers + 1)
+        g.add(Line(start=(0, y), end=(w, y), **s))
+    # Small handle circles for each drawer (centered)
+    for i in range(n_drawers + 1):
+        cy = d * (i + 0.5) / (n_drawers + 1)
+        g.add(Circle(center=(w / 2, cy), r=min(w, d) * 0.02, **s))
+
+
+def draw_vanity(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Vanity: rect table + oval mirror circle above."""
+    s = _style(style)
+    # Table/counter (lower portion)
+    table_h = d * 0.55
+    g.add(Rect(insert=(0, d - table_h), size=(w, table_h), **s))
+    # Mirror (ellipse in upper portion)
+    mirror_cy = d * 0.25
+    g.add(Ellipse(
+        center=(w / 2, mirror_cy),
+        r=(w * 0.35, d * 0.2),
+        **s,
+    ))
+    # Small drawer line on table
+    g.add(Line(
+        start=(w * 0.1, d * 0.72),
+        end=(w * 0.9, d * 0.72),
+        **s,
+    ))
+
+
+def draw_shoe_rack(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Shoe rack: low rect with 2-3 angled shelf lines."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # 3 angled shelf lines (slightly tilted for shoe display)
+    n_shelves = 3
+    for i in range(1, n_shelves + 1):
+        y = d * i / (n_shelves + 1)
+        # Angled lines: left side slightly higher than right
+        g.add(Line(
+            start=(w * 0.05, y - d * 0.03),
+            end=(w * 0.95, y + d * 0.03),
+            **s,
+        ))
+
+
+def draw_bench(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Bench: rect with seat line + optional backrest."""
+    s = _style(style)
+    # Backrest (narrow strip at back)
+    back_d = d * 0.2
+    g.add(Rect(insert=(0, 0), size=(w, back_d), **s))
+    # Seat
+    g.add(Rect(insert=(0, back_d), size=(w, d - back_d), **s))
+    # Seat line (edge between backrest and seat)
+    g.add(Line(start=(0, back_d), end=(w, back_d), **s))
+    # Leg indicators at corners
+    leg_r = min(w, d) * 0.025
+    for lx, ly in [
+        (w * 0.08, d * 0.92),
+        (w * 0.92, d * 0.92),
+    ]:
+        g.add(Circle(center=(lx, ly), r=leg_r, **s))
+
+
+def draw_coat_rack(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Coat rack: rect with hook circles along top."""
+    s = _style(style)
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Horizontal rail line near top
+    rail_y = d * 0.25
+    g.add(Line(start=(w * 0.05, rail_y), end=(w * 0.95, rail_y), **s))
+    # Hook circles along the rail (5 hooks evenly spaced)
+    n_hooks = 5
+    hook_r = min(w, d) * 0.03
+    for i in range(n_hooks):
+        cx = w * (i + 1) / (n_hooks + 1)
+        g.add(Circle(center=(cx, rail_y), r=hook_r, **s))
+    # Shelf line at top
+    g.add(Line(start=(0, d * 0.1), end=(w, d * 0.1), **s))
+
+
 def draw_rect_fallback(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
     label: str = "",
@@ -318,14 +616,22 @@ draw_rect_fallback.is_fallback = True  # type: ignore[attr-defined]
 
 FURNITURE_DRAWERS: dict[FurnitureType, Callable] = {
     FurnitureType.BATHTUB: draw_bathtub,
+    FurnitureType.SHOWER: draw_shower,
     FurnitureType.TOILET_BOWL: draw_toilet,
     FurnitureType.SINK: draw_sink,
+    FurnitureType.DOUBLE_SINK: draw_double_sink,
     FurnitureType.KITCHEN_SINK: draw_sink,
+    FurnitureType.BIDET: draw_bidet,
     FurnitureType.WASHING_MACHINE: draw_washing_machine,
+    FurnitureType.DRYER: draw_dryer,
     FurnitureType.STOVE: draw_stove,
     FurnitureType.HOB: draw_stove,
+    FurnitureType.OVEN: draw_oven,
     FurnitureType.FRIDGE: draw_fridge,
     FurnitureType.FRIDGE_SIDE_BY_SIDE: draw_fridge,
+    FurnitureType.DISHWASHER: draw_dishwasher,
+    FurnitureType.HOOD: draw_hood,
+    FurnitureType.MICROWAVE: draw_microwave,
     FurnitureType.BED_SINGLE: draw_bed,
     FurnitureType.BED_DOUBLE: draw_bed,
     FurnitureType.BED_KING: draw_bed,
@@ -340,13 +646,19 @@ FURNITURE_DRAWERS: dict[FurnitureType, Callable] = {
     FurnitureType.HALLWAY_WARDROBE: draw_wardrobe,
     FurnitureType.CHILD_WARDROBE: draw_wardrobe,
     FurnitureType.NIGHTSTAND: draw_nightstand,
+    FurnitureType.DRESSER: draw_dresser,
+    FurnitureType.VANITY: draw_vanity,
     FurnitureType.DINING_TABLE: draw_table,
     FurnitureType.COFFEE_TABLE: draw_table,
     FurnitureType.DINING_CHAIR: draw_chair,
     FurnitureType.DESK: draw_desk,
     FurnitureType.CHILD_DESK: draw_desk,
     FurnitureType.TV_STAND: draw_tv_stand,
-    FurnitureType.HOOD: draw_hood,
+    FurnitureType.BOOKSHELF: draw_bookshelf,
+    FurnitureType.SHELVING: draw_shelving,
+    FurnitureType.SHOE_RACK: draw_shoe_rack,
+    FurnitureType.BENCH: draw_bench,
+    FurnitureType.COAT_RACK: draw_coat_rack,
 }
 
 

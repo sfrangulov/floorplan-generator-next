@@ -697,3 +697,15 @@ def test_wide_window_has_mullion():
     lines = floor.findall("svg:line", ns)
     # Should have 3 lines: 2 parallel + 1 mullion
     assert len(lines) >= 3, f"Expected >= 3 lines (2 panes + mullion), got {len(lines)}"
+
+
+# R35
+def test_all_furniture_types_have_dedicated_drawer():
+    """No furniture type falls back to draw_rect_fallback."""
+    from floorplan_generator.renderer.symbols.furniture import get_drawer, draw_rect_fallback
+
+    for ft in FurnitureType:
+        drawer = get_drawer(ft)
+        assert drawer is not draw_rect_fallback, (
+            f"{ft.value} uses fallback drawer — needs dedicated symbol"
+        )
