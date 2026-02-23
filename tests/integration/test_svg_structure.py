@@ -60,3 +60,43 @@ def test_furniture_group_contains_furniture():
     assert furniture_g is not None
     children = list(furniture_g)
     assert len(children) >= 1, "furniture group should have furniture"
+
+
+# SVG04
+def test_walls_are_rects_not_lines():
+    """Generated SVG has wall rects (not lines) in floor group."""
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    assert result is not None
+    svg_str = render_svg(result)
+    root = ElementTree.fromstring(svg_str)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    rects = floor.findall("svg:rect", ns)
+    assert len(rects) >= 4, f"Expected wall rects, got {len(rects)}"
+
+
+# SVG05
+def test_mebel_group_exists():
+    """Furniture group is named 'mebel'."""
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    assert result is not None
+    svg_str = render_svg(result)
+    root = ElementTree.fromstring(svg_str)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    mebel = root.findall(".//svg:g[@id='mebel']", ns)
+    assert len(mebel) == 1
+
+
+# SVG06
+def test_text_font_size_is_large():
+    """Room labels use font-size >= 20."""
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    assert result is not None
+    svg_str = render_svg(result)
+    root = ElementTree.fromstring(svg_str)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    texts = root.findall(".//svg:text", ns)
+    assert len(texts) >= 2
+    for text_el in texts:
+        fs = text_el.get("font-size", "0")
+        assert int(fs) >= 20, f"Font size {fs} too small"
