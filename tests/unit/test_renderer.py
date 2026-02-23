@@ -158,7 +158,7 @@ def test_room_polygon_render():
     room_polygons = []
     for g in all_groups:
         gid = g.get("id", "")
-        if gid in ("furniture", "floor"):
+        if gid in ("mebel", "floor"):
             continue
         polygons = g.findall("svg:polygon", ns)
         room_polygons.extend(polygons)
@@ -303,7 +303,7 @@ def test_furniture_rendered():
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    furniture_g = root.findall(".//svg:g[@id='furniture']", ns)
+    furniture_g = root.findall(".//svg:g[@id='mebel']", ns)
     assert len(furniture_g) == 1
     assert len(list(furniture_g[0])) >= 1
 
@@ -394,7 +394,7 @@ def test_full_render_layers_order():
     # Check layer order: background, room groups, furniture, floor
     # Room group IDs come before furniture, furniture comes before floor
     # Doors and windows are now inside floor group (no separate groups)
-    furniture_pos = svg.find('id="furniture"')
+    furniture_pos = svg.find('id="mebel"')
     floor_pos = svg.find('id="floor"')
     assert furniture_pos < floor_pos
     # No separate doors or windows groups
@@ -431,8 +431,8 @@ def test_svg_structure_matches_reference():
     assert len(bg) == 1, "Expected exactly one element with id='background'"
 
     # 2. Furniture group
-    furniture_g = root.findall(".//svg:g[@id='furniture']", ns)
-    assert len(furniture_g) == 1, "Expected exactly one <g id='furniture'>"
+    furniture_g = root.findall(".//svg:g[@id='mebel']", ns)
+    assert len(furniture_g) == 1, "Expected exactly one <g id='mebel'>"
 
     # 3. Floor group (contains walls, doors, windows, risers)
     floor = root.findall(".//svg:g[@id='floor']", ns)
@@ -442,7 +442,7 @@ def test_svg_structure_matches_reference():
     children = list(root)
     ids = [child.get("id") for child in children if child.get("id")]
     bg_idx = ids.index("background")
-    furniture_idx = ids.index("furniture")
+    furniture_idx = ids.index("mebel")
     floor_idx = ids.index("floor")
     assert bg_idx < furniture_idx < floor_idx
     # Room group (r1) should appear between background and furniture
@@ -709,3 +709,20 @@ def test_all_furniture_types_have_dedicated_drawer():
         assert drawer is not draw_rect_fallback, (
             f"{ft.value} uses fallback drawer — needs dedicated symbol"
         )
+
+
+# R36
+def test_furniture_group_named_mebel():
+    """Furniture group has id='mebel' (not 'furniture')."""
+    item = FurnitureItem(
+        id="f1", furniture_type=FurnitureType.BATHTUB,
+        position=Point(x=100, y=100), width=1700, depth=750,
+    )
+    room = _make_room(RoomType.BATHROOM, 0, 0, 2000, 2000, furniture=[item])
+    result = _make_result([room])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    mebel = root.findall("./svg:g[@id='mebel']", ns)
+    assert len(mebel) == 1, "Expected <g id='mebel'>"
+    assert root.findall("./svg:g[@id='furniture']", ns) == [], "Should not have id='furniture'"

@@ -68,7 +68,7 @@ def test_comfort_2room_all_layers():
     assert result is not None
     svg = render_svg(result)
     # New structure: background, per-room groups, furniture, floor
-    for layer_id in ["background", "furniture", "floor"]:
+    for layer_id in ["background", "mebel", "floor"]:
         assert f'id="{layer_id}"' in svg
     # Should NOT have old separate groups
     for old_id in ["rooms", "doors", "windows", "risers"]:

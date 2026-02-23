@@ -18,7 +18,7 @@ def test_generated_svg_has_reference_structure():
     root = ElementTree.fromstring(svg_str)
     ids = [el.get("id") for el in root.iter() if el.get("id")]
     assert "background" in ids
-    assert "furniture" in ids
+    assert "mebel" in ids
     assert "floor" in ids
     # At least one room group with type prefix
     room_groups = [i for i in ids if len(i) <= 3 and i[0] in "hrsc" and i[1:].isdigit()]
@@ -54,7 +54,7 @@ def test_furniture_group_contains_furniture():
     root = ElementTree.fromstring(svg_str)
     furniture_g = None
     for el in root.iter():
-        if el.get("id") == "furniture":
+        if el.get("id") == "mebel":
             furniture_g = el
             break
     assert furniture_g is not None

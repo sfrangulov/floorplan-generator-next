@@ -39,7 +39,7 @@ def render_svg(result: GenerationResult, theme: Theme | None = None) -> str:
     render_rooms(dwg, rooms, room_ids, mapper, theme)
 
     # Layer 3: Furniture
-    furniture_group = dwg.g(id="furniture")
+    furniture_group = dwg.g(id="mebel")
     render_furniture(dwg, furniture_group, rooms, mapper, theme)
     dwg.add(furniture_group)
 
