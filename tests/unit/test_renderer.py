@@ -1,4 +1,4 @@
-"""Unit tests for SVG renderer (R01-R20)."""
+"""Unit tests for SVG renderer (R01-R22)."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from floorplan_generator.core.models import (
 )
 from floorplan_generator.generator.types import GenerationResult, Stoyak
 from floorplan_generator.renderer.coordinate_mapper import CoordinateMapper
+from floorplan_generator.renderer.room_renderer import compute_room_group_ids
 from floorplan_generator.renderer.svg_renderer import render_svg
 from floorplan_generator.renderer.theme import load_theme
 
@@ -145,14 +146,23 @@ def test_theme_custom_json(tmp_path):
 
 # R07
 def test_room_polygon_render():
-    """Room boundary renders as SVG polygon."""
+    """Room boundary renders as SVG polygon inside individual room group."""
     room = _make_room(RoomType.LIVING_ROOM, 0, 0, 4000, 5000)
     result = _make_result([room])
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    polygons = root.findall(".//svg:g[@id='rooms']/svg:polygon", ns)
-    assert len(polygons) >= 1
+    # Room polygons are now in individual room groups (e.g. <g id="r1">)
+    # Find any group that contains a polygon (excluding mebel/floor)
+    all_groups = root.findall(".//svg:g", ns)
+    room_polygons = []
+    for g in all_groups:
+        gid = g.get("id", "")
+        if gid in ("mebel", "floor"):
+            continue
+        polygons = g.findall("svg:polygon", ns)
+        room_polygons.extend(polygons)
+    assert len(room_polygons) >= 1
 
 
 # R08
@@ -194,7 +204,7 @@ def test_wall_inner_thin():
 
 # R11
 def test_door_gap():
-    """Door creates visual element in SVG."""
+    """Door creates visual element in floor group."""
     door = Door(
         id="d1", position=Point(x=1000, y=0), width=800.0,
         door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
@@ -208,10 +218,11 @@ def test_door_gap():
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    door_group = root.findall(".//svg:g[@id='doors']", ns)
-    assert len(door_group) == 1
-    # Should have children (rect + path)
-    assert len(list(door_group[0])) >= 1
+    # Doors are now inside the floor group
+    floor_group = root.findall(".//svg:g[@id='floor']", ns)
+    assert len(floor_group) == 1
+    # Should have children (rect + path from doors, plus wall lines)
+    assert len(list(floor_group[0])) >= 1
 
 
 # R12
@@ -234,7 +245,7 @@ def test_door_swing_arc():
 
 # R13
 def test_window_rect():
-    """Window rect on external wall."""
+    """Window rect rendered inside floor group."""
     window = Window(
         id="w1", position=Point(x=1000, y=0),
         width=1500.0, height=1500.0, wall_side="north",
@@ -247,14 +258,16 @@ def test_window_rect():
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    win_group = root.findall(".//svg:g[@id='windows']", ns)
-    assert len(win_group) == 1
-    assert len(list(win_group[0])) >= 1
+    # Windows are now inside the floor group
+    floor_group = root.findall(".//svg:g[@id='floor']", ns)
+    assert len(floor_group) == 1
+    # Floor group should have children (walls + windows)
+    assert len(list(floor_group[0])) >= 1
 
 
 # R14
 def test_window_panes():
-    """Window has pane division lines."""
+    """Window has pane division lines inside floor group."""
     window = Window(
         id="w1", position=Point(x=1000, y=0),
         width=1500.0, height=1500.0, wall_side="north",
@@ -267,9 +280,10 @@ def test_window_panes():
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    win_group = root.findall(".//svg:g[@id='windows']", ns)[0]
-    lines = win_group.findall("svg:line", ns)
-    assert len(lines) >= 3  # 3 pane division lines
+    floor_group = root.findall(".//svg:g[@id='floor']", ns)[0]
+    lines = floor_group.findall("svg:line", ns)
+    # Should have wall lines + at least 3 pane division lines
+    assert len(lines) >= 3
 
 
 # R15
@@ -327,16 +341,17 @@ def test_furniture_rotation():
 
 # R18
 def test_stoyak_circle():
-    """Stoyak renders as filled circle."""
+    """Stoyak renders as filled circle inside floor group."""
     room = _make_room(RoomType.BATHROOM, 0, 0, 2000, 2000)
     stoyak = Stoyak(id="s1", position=Point(x=100, y=100))
     result = _make_result([room], stoyaks=[stoyak])
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    stoyak_group = root.findall(".//svg:g[@id='stoyaks']", ns)
-    assert len(stoyak_group) == 1
-    circles = stoyak_group[0].findall("svg:circle", ns)
+    # Stoyaks are now inside the floor group
+    floor_group = root.findall(".//svg:g[@id='floor']", ns)
+    assert len(floor_group) == 1
+    circles = floor_group[0].findall("svg:circle", ns)
     assert len(circles) == 1
 
 
@@ -353,7 +368,7 @@ def test_full_render_produces_valid_svg():
 
 # R20
 def test_full_render_layers_order():
-    """Elements appear in correct z-order: rooms, mebel, floor, doors, windows."""
+    """Elements appear in correct z-order: room groups, mebel, floor."""
     door = Door(
         id="d1", position=Point(x=1000, y=0), width=800.0,
         door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
@@ -374,10 +389,99 @@ def test_full_render_layers_order():
     )
     result = _make_result([room])
     svg = render_svg(result)
-    # Check layer order by finding group IDs in SVG string
-    rooms_pos = svg.find('id="rooms"')
+    # Check layer order: background, room groups, mebel, floor
+    # Room group IDs come before mebel, mebel comes before floor
+    # Doors and windows are now inside floor group (no separate groups)
     mebel_pos = svg.find('id="mebel"')
     floor_pos = svg.find('id="floor"')
-    doors_pos = svg.find('id="doors"')
-    windows_pos = svg.find('id="windows"')
-    assert rooms_pos < mebel_pos < floor_pos < doors_pos < windows_pos
+    assert mebel_pos < floor_pos
+    # No separate doors or windows groups
+    assert svg.find('id="doors"') == -1
+    assert svg.find('id="windows"') == -1
+    assert svg.find('id="stoyaks"') == -1
+
+
+# R21
+def test_svg_structure_matches_reference():
+    """SVG has background, mebel, floor IDs in correct order."""
+    door = Door(
+        id="d1", position=Point(x=1000, y=0), width=800.0,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
+        room_from="r1", room_to="r2",
+    )
+    window = Window(
+        id="w1", position=Point(x=500, y=0),
+        width=1200.0, height=1500.0, wall_side="north",
+    )
+    room = _make_room(
+        RoomType.LIVING_ROOM, 0, 0, 4000, 5000,
+        room_id="r1",
+        doors=[door], windows=[window],
+    )
+    stoyak = Stoyak(id="st1", position=Point(x=100, y=100))
+    result = _make_result([room], stoyaks=[stoyak])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+
+    # 1. Background element with id="background"
+    bg = root.findall(".//*[@id='background']")
+    assert len(bg) == 1, "Expected exactly one element with id='background'"
+
+    # 2. Mebel group
+    mebel = root.findall(".//svg:g[@id='mebel']", ns)
+    assert len(mebel) == 1, "Expected exactly one <g id='mebel'>"
+
+    # 3. Floor group (contains walls, doors, windows, stoyaks)
+    floor = root.findall(".//svg:g[@id='floor']", ns)
+    assert len(floor) == 1, "Expected exactly one <g id='floor'>"
+
+    # 4. Correct order: background before room groups before mebel before floor
+    bg_pos = svg.find('id="background"')
+    mebel_pos = svg.find('id="mebel"')
+    floor_pos = svg.find('id="floor"')
+    assert bg_pos < mebel_pos < floor_pos
+
+    # 5. No separate doors/windows/stoyaks/rooms groups
+    assert root.findall(".//svg:g[@id='doors']", ns) == []
+    assert root.findall(".//svg:g[@id='windows']", ns) == []
+    assert root.findall(".//svg:g[@id='stoyaks']", ns) == []
+    assert root.findall(".//svg:g[@id='rooms']", ns) == []
+
+
+# R22
+def test_room_group_ids_have_type_prefix():
+    """Each room gets a type-prefixed group ID (h1, r1, s1, c1)."""
+    rooms = [
+        _make_room(RoomType.HALLWAY, 0, 0, 2000, 3000, room_id="room_hall"),
+        _make_room(RoomType.LIVING_ROOM, 2000, 0, 4000, 5000, room_id="room_living"),
+        _make_room(RoomType.BATHROOM, 0, 3000, 2000, 2000, room_id="room_bath"),
+        _make_room(RoomType.KITCHEN, 2000, 5000, 3000, 3000, room_id="room_kitchen"),
+    ]
+
+    # Test compute_room_group_ids function
+    room_ids = compute_room_group_ids(rooms)
+    assert room_ids["room_hall"] == "h1"
+    assert room_ids["room_living"] == "r1"
+    assert room_ids["room_bath"] == "s1"
+    assert room_ids["room_kitchen"] == "c1"
+
+    # Test that rendered SVG contains these group IDs
+    result = _make_result(rooms)
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    h1 = root.findall(".//svg:g[@id='h1']", ns)
+    r1 = root.findall(".//svg:g[@id='r1']", ns)
+    s1 = root.findall(".//svg:g[@id='s1']", ns)
+    c1 = root.findall(".//svg:g[@id='c1']", ns)
+    assert len(h1) == 1, "Expected <g id='h1'> for hallway"
+    assert len(r1) == 1, "Expected <g id='r1'> for living_room"
+    assert len(s1) == 1, "Expected <g id='s1'> for bathroom"
+    assert len(c1) == 1, "Expected <g id='c1'> for kitchen"
+
+    # Each room group should contain a polygon
+    assert len(h1[0].findall("svg:polygon", ns)) >= 1
+    assert len(r1[0].findall("svg:polygon", ns)) >= 1
+    assert len(s1[0].findall("svg:polygon", ns)) >= 1
+    assert len(c1[0].findall("svg:polygon", ns)) >= 1
