@@ -65,7 +65,7 @@ def compute_room_group_ids(rooms: list[Room]) -> dict[str, str]:
     counters: dict[str, int] = defaultdict(int)
     result: dict[str, str] = {}
     for room in rooms:
-        prefix = _ROOM_PREFIX.get(room.room_type, "x")
+        prefix = _ROOM_PREFIX.get(room.room_type, "c")
         counters[prefix] += 1
         result[room.id] = f"{prefix}{counters[prefix]}"
     return result

@@ -436,11 +436,16 @@ def test_svg_structure_matches_reference():
     floor = root.findall(".//svg:g[@id='floor']", ns)
     assert len(floor) == 1, "Expected exactly one <g id='floor'>"
 
-    # 4. Correct order: background before room groups before mebel before floor
-    bg_pos = svg.find('id="background"')
-    mebel_pos = svg.find('id="mebel"')
-    floor_pos = svg.find('id="floor"')
-    assert bg_pos < mebel_pos < floor_pos
+    # 4. Correct order via child indices: background < room groups < mebel < floor
+    children = list(root)
+    ids = [child.get("id") for child in children if child.get("id")]
+    bg_idx = ids.index("background")
+    mebel_idx = ids.index("mebel")
+    floor_idx = ids.index("floor")
+    assert bg_idx < mebel_idx < floor_idx
+    # Room group (r1) should appear between background and mebel
+    r1_idx = ids.index("r1")
+    assert bg_idx < r1_idx < mebel_idx, "Room group should appear between background and mebel"
 
     # 5. No separate doors/windows/stoyaks/rooms groups
     assert root.findall(".//svg:g[@id='doors']", ns) == []
