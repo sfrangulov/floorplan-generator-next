@@ -442,3 +442,20 @@ def test_all_window_rooms_get_windows():
             assert room.id in rooms_with_windows, (
                 f"{room.room_type} (id={room.id}) has no window"
             )
+
+
+# CS22
+def test_furniture_skip_unfittable():
+    """When a furniture item has positions but all violate constraints, skip it."""
+    room = _room_at(RoomType.BEDROOM, 0, 0, 3000, 3000)
+    door = Door(
+        id="bigdoor", position=Point(x=0, y=0), width=2500,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
+        room_from="a", room_to=room.id, wall_orientation="vertical",
+    )
+    rng = random.Random(42)
+    furniture = place_furniture(
+        room, [FurnitureType.WARDROBE_SLIDING, FurnitureType.NIGHTSTAND],
+        doors=[door], stoyaks=[], rng=rng,
+    )
+    assert furniture is not None

@@ -163,11 +163,8 @@ def _backtrack(
 
         placed.pop()
 
-    # If the item physically doesn't fit in the room at any rotation
-    # (no candidate positions generated), skip it gracefully.
-    # If positions existed but all violated constraints, fail.
-    if not positions:
-        return _backtrack(
-            items, index + 1, placed, room, room_bb, doors, stoyaks, rng, step,
-        )
-    return None
+    # If no valid position found for this item, skip it and continue
+    # with remaining items rather than failing the entire room.
+    return _backtrack(
+        items, index + 1, placed, room, room_bb, doors, stoyaks, rng, step,
+    )
