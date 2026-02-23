@@ -244,3 +244,39 @@ def min_distance_rect_to_rect(r1: Rectangle, r2: Rectangle) -> float:
     # Vertical gap
     dy = max(0.0, max(r2.y - (r1.y + r1.height), r1.y - (r2.y + r2.height)))
     return math.sqrt(dx * dx + dy * dy)
+
+
+def min_distance_point_to_segment(point: Point, seg: Segment) -> float:
+    """Minimum distance from a point to a line segment."""
+    ax, ay = seg.start.x, seg.start.y
+    bx, by = seg.end.x, seg.end.y
+    px, py = point.x, point.y
+
+    dx, dy = bx - ax, by - ay
+    length_sq = dx * dx + dy * dy
+
+    if length_sq == 0:
+        return point.distance_to(seg.start)
+
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / length_sq))
+    proj = Point(x=ax + t * dx, y=ay + t * dy)
+    return point.distance_to(proj)
+
+
+def min_distance_rect_to_segment(rect: Rectangle, seg: Segment) -> float:
+    """Minimum distance from an axis-aligned rectangle to a line segment."""
+    corners = rect.corners
+    # Check all 4 corners to segment
+    min_d = min(min_distance_point_to_segment(c, seg) for c in corners)
+    # Check segment endpoints to rectangle edges
+    rect_segs = [
+        Segment(start=corners[i], end=corners[(i + 1) % 4])
+        for i in range(4)
+    ]
+    for rs in rect_segs:
+        min_d = min(min_d, min_distance_point_to_segment(seg.start, rs))
+        min_d = min(min_d, min_distance_point_to_segment(seg.end, rs))
+        # Check segment-segment intersection (distance = 0)
+        if segments_intersect(rs, seg):
+            return 0.0
+    return min_d
