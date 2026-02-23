@@ -19,20 +19,33 @@ def _external_wall_segments(
     room: Room,
     canvas: Rectangle,
 ) -> list[Segment]:
-    """Get wall segments that lie on the canvas boundary."""
+    """Get wall segments that lie on or near the canvas boundary.
+
+    A wall is considered external if it is parallel to and within ``eps``
+    of a canvas edge.  For vertical walls we compare the constant x
+    coordinate; for horizontal walls we compare the constant y
+    coordinate.  This avoids misclassifying interior walls that happen
+    to have their midpoint near an edge.
+
+    Uses a 250mm tolerance to account for greedy layout grid snapping,
+    which can leave gaps between room walls and the canvas edge.
+    """
     segs = wall_segments(room)
     result = []
-    eps = 2.0
+    eps = 250.0
     for seg in segs:
-        mid = seg.midpoint
-        on_edge = (
-            abs(mid.x - canvas.x) < eps
-            or abs(mid.y - canvas.y) < eps
-            or abs(mid.x - (canvas.x + canvas.width)) < eps
-            or abs(mid.y - (canvas.y + canvas.height)) < eps
-        )
-        if on_edge and seg.length >= 600:
-            result.append(seg)
+        if seg.length < 600:
+            continue
+        is_vertical = abs(seg.start.x - seg.end.x) < 1
+        is_horizontal = abs(seg.start.y - seg.end.y) < 1
+        if is_vertical:
+            x = seg.start.x
+            if abs(x - canvas.x) < eps or abs(x - (canvas.x + canvas.width)) < eps:
+                result.append(seg)
+        elif is_horizontal:
+            y = seg.start.y
+            if abs(y - canvas.y) < eps or abs(y - (canvas.y + canvas.height)) < eps:
+                result.append(seg)
     return result
 
 
@@ -53,7 +66,15 @@ def place_windows(
 
         ext_walls = _external_wall_segments(room, canvas)
         if not ext_walls:
-            continue
+            # Fallback: use the longest wall for rooms that must have a window.
+            # This represents a light-well or courtyard-facing window.
+            all_walls = [
+                s for s in wall_segments(room) if s.length >= 600
+            ]
+            if all_walls:
+                ext_walls = [max(all_walls, key=lambda s: s.length)]
+            else:
+                continue
 
         needed_area_m2 = room.area_m2 * WINDOW_RATIOS["min_ratio"]
         placed_area_m2 = 0.0
@@ -81,13 +102,19 @@ def place_windows(
                 mid_y = (wall.start.y + wall.end.y) / 2
                 pos = Point(x=wall.start.x, y=mid_y - _WINDOW_HEIGHT / 2)
                 wall_side = (
-                    "west" if abs(wall.start.x - canvas.x) < 2 else "east"
+                    "west"
+                    if abs(wall.start.x - canvas.x)
+                    < abs(wall.start.x - (canvas.x + canvas.width))
+                    else "east"
                 )
             else:
                 mid_x = (wall.start.x + wall.end.x) / 2
                 pos = Point(x=mid_x - width / 2, y=wall.start.y)
                 wall_side = (
-                    "north" if abs(wall.start.y - canvas.y) < 2 else "south"
+                    "north"
+                    if abs(wall.start.y - canvas.y)
+                    < abs(wall.start.y - (canvas.y + canvas.height))
+                    else "south"
                 )
 
             window = Window(
