@@ -9,6 +9,8 @@ from pathlib import Path
 from floorplan_generator.core.enums import ApartmentClass
 from floorplan_generator.generator.layout_engine import generate_apartment
 from floorplan_generator.generator.types import GenerationResult
+from floorplan_generator.renderer.svg_renderer import render_svg_to_file
+from floorplan_generator.renderer.theme import Theme, load_theme
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +34,15 @@ def generate_dataset(
     seed: int,
     output: Path,
     max_restarts: int = 10,
+    theme: Theme | None = None,
 ) -> list[dict]:
-    """Generate a dataset of apartments and save metadata.
+    """Generate a dataset of apartments and save SVG + metadata.
 
     Returns metadata list.
     """
     output.mkdir(parents=True, exist_ok=True)
+    if theme is None:
+        theme = load_theme("blueprint")
     metadata = []
 
     for i in range(count):
@@ -51,9 +56,19 @@ def generate_dataset(
             logger.warning("Failed to generate #%d", i)
             continue
 
+        filename = f"{apartment_class.value}_{num_rooms}r_{i:04d}"
+
+        # Save SVG
+        svg_path = output / f"{filename}.svg"
+        render_svg_to_file(result, str(svg_path), theme)
+
+        # Save apartment JSON for re-rendering
+        json_path = output / f"{filename}.json"
+        json_path.write_text(result.model_dump_json(indent=2))
+
         entry = {
             "index": i,
-            "filename": f"{apartment_class.value}_{num_rooms}r_{i:04d}",
+            "filename": filename,
             "class": apartment_class.value,
             "rooms": num_rooms,
             "total_area_m2": round(result.apartment.total_area_m2, 1),
