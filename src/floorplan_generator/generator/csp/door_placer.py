@@ -137,6 +137,7 @@ def place_doors(
             if any(arc.overlaps(a) for a in placed_arcs):
                 continue
 
+            orientation = "vertical" if is_vertical else "horizontal"
             door = Door(
                 id=uuid.uuid4().hex[:8],
                 position=door_pos,
@@ -145,6 +146,7 @@ def place_doors(
                 swing=swing,
                 room_from=sw.room_a_id,
                 room_to=sw.room_b_id,
+                wall_orientation=orientation,
             )
 
             placed_doors.append({

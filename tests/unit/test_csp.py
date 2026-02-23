@@ -369,3 +369,52 @@ def test_two_variants_different_furniture():
                     different = True
                     break
         assert different
+
+
+# CS18
+def test_door_wall_orientation_set():
+    """Placed doors have correct wall_orientation matching their shared wall."""
+    rooms, shared_walls, _ = _simple_topology()
+    rng = random.Random(42)
+    doors = place_doors(rooms, shared_walls, rng)
+    for door_info in doors:
+        door = door_info["door"]
+        wall = door_info["shared_wall"]
+        is_vertical = abs(wall.start.x - wall.end.x) < 1
+        expected = "vertical" if is_vertical else "horizontal"
+        assert door.wall_orientation == expected, (
+            f"Door {door.id}: expected {expected}, got {door.wall_orientation}"
+        )
+
+
+# CS19
+def test_door_swing_arc_matches_placer_arc():
+    """Door.swing_arc matches the arc used during placement (no mismatch)."""
+    rooms, shared_walls, _ = _simple_topology()
+    rng = random.Random(42)
+    doors = place_doors(rooms, shared_walls, rng)
+    for door_info in doors:
+        door = door_info["door"]
+        wall = door_info["shared_wall"]
+        is_vertical = abs(wall.start.x - wall.end.x) < 1
+        if is_vertical:
+            expected_x = (
+                door.position.x - door.width
+                if door.swing == SwingDirection.OUTWARD
+                else door.position.x
+            )
+            expected_arc = Rectangle(
+                x=expected_x, y=door.position.y,
+                width=door.width, height=door.width,
+            )
+        else:
+            expected_y = (
+                door.position.y - door.width
+                if door.swing == SwingDirection.OUTWARD
+                else door.position.y
+            )
+            expected_arc = Rectangle(
+                x=door.position.x, y=expected_y,
+                width=door.width, height=door.width,
+            )
+        assert door.swing_arc == expected_arc
