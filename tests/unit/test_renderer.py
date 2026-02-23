@@ -655,3 +655,45 @@ def test_door_has_leaf_rect_and_arc():
     # Leaf is ~40mm scaled (~25px), wall rects are ~142px thick
     thin_rects = [r for r in rects if float(r.get("width", "999")) < 50 or float(r.get("height", "999")) < 50]
     assert len(thin_rects) >= 1, "Expected thin door leaf rect"
+
+
+# R33
+def test_window_double_line():
+    """Window renders as two parallel lines (double glazing symbol)."""
+    window = Window(
+        id="w1", position=Point(x=1000, y=0), width=1500, height=1500,
+        wall_side="north",
+    )
+    room = _make_room(
+        RoomType.LIVING_ROOM, 0, 0, 4000, 4000, room_id="r1",
+        windows=[window],
+    )
+    result = _make_result([room])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    lines = floor.findall("svg:line", ns)
+    # Should have at least 2 lines for double-glazing symbol
+    assert len(lines) >= 2, f"Expected >= 2 window lines, got {len(lines)}"
+
+
+# R34
+def test_wide_window_has_mullion():
+    """Windows wider than 1200mm have a perpendicular mullion line."""
+    window = Window(
+        id="w1", position=Point(x=500, y=0), width=1800, height=1500,
+        wall_side="north",
+    )
+    room = _make_room(
+        RoomType.LIVING_ROOM, 0, 0, 4000, 4000, room_id="r1",
+        windows=[window],
+    )
+    result = _make_result([room])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    lines = floor.findall("svg:line", ns)
+    # Should have 3 lines: 2 parallel + 1 mullion
+    assert len(lines) >= 3, f"Expected >= 3 lines (2 panes + mullion), got {len(lines)}"
