@@ -1,4 +1,4 @@
-"""Integration tests for SVG renderer (RI01-RI05)."""
+"""Integration tests for SVG renderer (RI01-RI07)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,9 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 from floorplan_generator.core.enums import ApartmentClass
+from floorplan_generator.generator.factory import generate_dataset
 from floorplan_generator.generator.layout_engine import generate_apartment
+from floorplan_generator.generator.types import GenerationResult
 from floorplan_generator.renderer.svg_renderer import render_svg, render_svg_to_file
 from floorplan_generator.renderer.theme import load_theme
 
@@ -67,3 +69,34 @@ def test_comfort_2room_all_layers():
     svg = render_svg(result)
     for layer_id in ["rooms", "mebel", "floor", "doors", "windows"]:
         assert f'id="{layer_id}"' in svg
+
+
+# RI06
+def test_dataset_generation_svgs():
+    """generate_dataset produces SVG files + JSON + metadata."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output = Path(tmpdir)
+        metadata = generate_dataset(
+            ApartmentClass.ECONOMY, 1, 3, 42, output,
+        )
+        assert len(metadata) > 0
+        assert (output / "metadata.json").exists()
+        svg_files = list(output.glob("*.svg"))
+        json_files = [
+            f for f in output.glob("*.json")
+            if f.name != "metadata.json"
+        ]
+        assert len(svg_files) == len(metadata)
+        assert len(json_files) == len(metadata)
+
+
+# RI07
+def test_render_from_json():
+    """Serialize apartment to JSON, reload, re-render matches."""
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42)
+    assert result is not None
+    json_str = result.model_dump_json()
+    reloaded = GenerationResult.model_validate_json(json_str)
+    svg1 = render_svg(result)
+    svg2 = render_svg(reloaded)
+    assert svg1 == svg2

@@ -49,7 +49,7 @@ def _render_item(
     item_group = dwg.g(transform=transform)
 
     drawer = get_drawer(item.furniture_type)
-    if drawer.__name__ == "draw_rect_fallback":
+    if getattr(drawer, "is_fallback", False):
         drawer(item_group, w, d, style, label=item.furniture_type.value)
     else:
         drawer(item_group, w, d, style)

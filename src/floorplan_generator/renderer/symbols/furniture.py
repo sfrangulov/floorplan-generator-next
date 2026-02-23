@@ -268,8 +268,11 @@ def draw_rect_fallback(
             dominant_baseline="central",
             font_size=max(6, min(w, d) * 0.15),
             font_family="Arial, sans-serif",
-            fill=s.get("stroke", "#000000"),
+            fill=s["stroke"],
         ))
+
+
+draw_rect_fallback.is_fallback = True  # type: ignore[attr-defined]
 
 
 # --- Registry mapping FurnitureType -> draw function ---
