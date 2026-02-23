@@ -18,7 +18,7 @@ class CoordinateMapper:
         rooms: list[Room],
         canvas_width: int = 2000,
         canvas_height: int = 2000,
-        padding: int = 100,
+        padding: int = 50,
     ) -> None:
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
@@ -76,3 +76,7 @@ class CoordinateMapper:
     def scale_length(self, mm_length: float) -> float:
         """Convert mm length to SVG length (no offset)."""
         return round(mm_length * self.scale, 1)
+
+    def scale_thickness(self, mm_thickness: float) -> float:
+        """Convert mm thickness to SVG thickness (min 2.0 for visibility)."""
+        return max(2.0, round(mm_thickness * self.scale, 1))

@@ -572,3 +572,22 @@ def test_theme_text_sizes_large():
     theme = load_theme("colored")
     assert theme.text.font_size >= 28
     assert theme.text.area_font_size >= 20
+
+
+# R28
+def test_coordinate_mapper_scale_thickness():
+    """scale_thickness converts mm thickness to SVG px, min 2.0."""
+    room = _make_room(RoomType.LIVING_ROOM, 0, 0, 10000, 10000)
+    mapper = CoordinateMapper([room], 2000, 2000, padding=50)
+    t = mapper.scale_thickness(225.0)
+    assert t >= 2.0
+    # For 10000mm room on 2000px canvas (~0.19 scale), 225mm -> ~42px
+    assert t > 20.0
+
+
+# R29
+def test_coordinate_mapper_reduced_padding():
+    """Default padding is 50, not 100."""
+    room = _make_room(RoomType.LIVING_ROOM, 0, 0, 10000, 10000)
+    mapper = CoordinateMapper([room], 2000, 2000)
+    assert mapper.padding == 50
