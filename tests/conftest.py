@@ -149,3 +149,160 @@ def make_furniture():
         )
 
     return _factory
+
+
+@pytest.fixture
+def economy_1room(
+    make_room, make_door, make_window, make_furniture, make_apartment,
+):
+    """1-room economy apartment with rooms, doors, windows, furniture."""
+    hallway = make_room(RoomType.HALLWAY, width_m=2.0, height_m=1.6)
+    corridor = make_room(RoomType.CORRIDOR, width_m=1.0, height_m=3.0)
+    living = make_room(
+        RoomType.LIVING_ROOM, width_m=4.0, height_m=4.0,
+        windows=[make_window(width=1500.0, height=1500.0)],
+    )
+    kitchen = make_room(
+        RoomType.KITCHEN, width_m=3.0, height_m=3.0,
+        windows=[make_window(width=1200.0, height=1500.0)],
+    )
+    bathroom = make_room(
+        RoomType.COMBINED_BATHROOM, width_m=2.0, height_m=2.0,
+    )
+
+    d1 = make_door(
+        door_type=DoorType.ENTRANCE, width=860.0,
+        room_from=hallway.id, room_to=corridor.id,
+    )
+    d2 = make_door(room_from=corridor.id, room_to=living.id)
+    d3 = make_door(
+        door_type=DoorType.KITCHEN, width=700.0,
+        room_from=corridor.id, room_to=kitchen.id,
+    )
+    d4 = make_door(
+        door_type=DoorType.COMBINED_BATHROOM, width=600.0,
+        swing=SwingDirection.OUTWARD,
+        room_from=corridor.id, room_to=bathroom.id,
+    )
+
+    hallway = hallway.model_copy(update={"doors": [d1]})
+    corridor = corridor.model_copy(update={"doors": [d2, d3, d4]})
+
+    return make_apartment(
+        ApartmentClass.ECONOMY,
+        [hallway, corridor, living, kitchen, bathroom],
+        num_rooms=1,
+    )
+
+
+@pytest.fixture
+def comfort_2room(
+    make_room, make_door, make_window, make_furniture, make_apartment,
+):
+    """2-room comfort apartment."""
+    hallway = make_room(RoomType.HALLWAY, width_m=2.5, height_m=1.8)
+    corridor = make_room(RoomType.CORRIDOR, width_m=1.2, height_m=4.0)
+    living = make_room(
+        RoomType.LIVING_ROOM, width_m=4.5, height_m=4.5,
+        windows=[make_window(width=1500.0, height=1500.0)],
+    )
+    bedroom = make_room(
+        RoomType.BEDROOM, width_m=3.5, height_m=4.0,
+        windows=[make_window(width=1500.0, height=1500.0)],
+    )
+    kitchen = make_room(
+        RoomType.KITCHEN, width_m=3.5, height_m=3.5,
+        windows=[make_window(width=1200.0, height=1500.0)],
+    )
+    bathroom = make_room(RoomType.BATHROOM, width_m=2.0, height_m=2.0)
+    toilet = make_room(RoomType.TOILET, width_m=1.0, height_m=1.5)
+
+    d1 = make_door(
+        door_type=DoorType.ENTRANCE, width=860.0,
+        room_from=hallway.id, room_to=corridor.id,
+    )
+    d2 = make_door(room_from=corridor.id, room_to=living.id)
+    d3 = make_door(room_from=corridor.id, room_to=bedroom.id)
+    d4 = make_door(
+        door_type=DoorType.KITCHEN, width=700.0,
+        room_from=corridor.id, room_to=kitchen.id,
+    )
+    d5 = make_door(
+        door_type=DoorType.BATHROOM, width=600.0,
+        swing=SwingDirection.OUTWARD,
+        room_from=corridor.id, room_to=bathroom.id,
+    )
+    d6 = make_door(
+        door_type=DoorType.BATHROOM, width=600.0,
+        swing=SwingDirection.OUTWARD,
+        room_from=corridor.id, room_to=toilet.id,
+    )
+
+    hallway = hallway.model_copy(update={"doors": [d1]})
+    corridor = corridor.model_copy(
+        update={"doors": [d2, d3, d4, d5, d6]},
+    )
+
+    return make_apartment(
+        ApartmentClass.COMFORT,
+        [hallway, corridor, living, bedroom, kitchen, bathroom, toilet],
+        num_rooms=2,
+    )
+
+
+@pytest.fixture
+def comfort_3room(make_room, make_door, make_window, make_apartment):
+    """3-room comfort apartment."""
+    hallway = make_room(RoomType.HALLWAY, width_m=2.5, height_m=2.0)
+    corridor = make_room(RoomType.CORRIDOR, width_m=1.2, height_m=5.0)
+    living = make_room(
+        RoomType.LIVING_ROOM, width_m=5.0, height_m=4.5,
+        windows=[make_window(width=1800.0, height=1500.0)],
+    )
+    bed1 = make_room(
+        RoomType.BEDROOM, width_m=3.5, height_m=4.0,
+        windows=[make_window(width=1500.0, height=1500.0)],
+    )
+    bed2 = make_room(
+        RoomType.BEDROOM, width_m=3.0, height_m=3.5,
+        windows=[make_window(width=1500.0, height=1500.0)],
+    )
+    kitchen = make_room(
+        RoomType.KITCHEN, width_m=4.0, height_m=3.5,
+        windows=[make_window(width=1200.0, height=1500.0)],
+    )
+    bathroom = make_room(RoomType.BATHROOM, width_m=2.0, height_m=2.0)
+    toilet = make_room(RoomType.TOILET, width_m=1.0, height_m=1.5)
+
+    d1 = make_door(
+        door_type=DoorType.ENTRANCE, width=860.0,
+        room_from=hallway.id, room_to=corridor.id,
+    )
+    d2 = make_door(room_from=corridor.id, room_to=living.id)
+    d3 = make_door(room_from=corridor.id, room_to=bed1.id)
+    d4 = make_door(room_from=corridor.id, room_to=bed2.id)
+    d5 = make_door(
+        door_type=DoorType.KITCHEN, width=700.0,
+        room_from=corridor.id, room_to=kitchen.id,
+    )
+    d6 = make_door(
+        door_type=DoorType.BATHROOM, width=600.0,
+        swing=SwingDirection.OUTWARD,
+        room_from=corridor.id, room_to=bathroom.id,
+    )
+    d7 = make_door(
+        door_type=DoorType.BATHROOM, width=600.0,
+        swing=SwingDirection.OUTWARD,
+        room_from=corridor.id, room_to=toilet.id,
+    )
+
+    hallway = hallway.model_copy(update={"doors": [d1]})
+    corridor = corridor.model_copy(
+        update={"doors": [d2, d3, d4, d5, d6, d7]},
+    )
+
+    return make_apartment(
+        ApartmentClass.COMFORT,
+        [hallway, corridor, living, bed1, bed2, kitchen, bathroom, toilet],
+        num_rooms=3,
+    )
