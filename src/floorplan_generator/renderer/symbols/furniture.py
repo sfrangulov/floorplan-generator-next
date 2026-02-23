@@ -55,7 +55,7 @@ def draw_bathtub(
 def draw_toilet(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
-    """Toilet: tank rect + oval bowl."""
+    """Toilet: tank rect + oval bowl + seat lid line."""
     s = _style(style)
     tank_h = d * 0.35
     # Tank
@@ -70,6 +70,13 @@ def draw_toilet(
     g.add(Ellipse(
         center=(w / 2, tank_h + (d - tank_h) * 0.55),
         r=(w * 0.28, (d - tank_h) * 0.3),
+        **s,
+    ))
+    # Seat lid line: horizontal line across the bowl area
+    lid_y = tank_h + (d - tank_h) * 0.35
+    g.add(Line(
+        start=(w * 0.12, lid_y),
+        end=(w * 0.88, lid_y),
         **s,
     ))
 
@@ -89,11 +96,15 @@ def draw_sink(
 def draw_washing_machine(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
-    """Washing machine: rect + large drum circle + inner circles."""
+    """Washing machine: rect + control panel + large drum circle + inner circles."""
     s = _style(style)
     g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Control panel strip at top
+    panel_h = d * 0.1
+    g.add(Rect(insert=(0, 0), size=(w, panel_h), **s))
+    # Drum (centered below panel)
     r_drum = min(w, d) * 0.38
-    cx, cy = w / 2, d / 2
+    cx, cy = w / 2, panel_h + (d - panel_h) / 2
     g.add(Circle(center=(cx, cy), r=r_drum, **s))
     g.add(Circle(center=(cx, cy), r=r_drum * 0.25, **s))
 
@@ -118,34 +129,24 @@ def draw_stove(
 def draw_fridge(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
-    """Fridge: rect + snowflake cross pattern."""
+    """Fridge: rect + compartment division line + handle."""
     s = _style(style)
+    # Main body
     g.add(Rect(insert=(0, 0), size=(w, d), **s))
-    cx, cy = w / 2, d / 2
-    arm = min(w, d) * 0.25
-    # Cross lines
-    g.add(Line(start=(cx - arm, cy), end=(cx + arm, cy), **s))
-    g.add(Line(start=(cx, cy - arm), end=(cx, cy + arm), **s))
-    # Arrow tips (4 V-shapes)
-    tip = arm * 0.4
-    for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-        ex, ey = cx + dx * arm, cy + dy * arm
-        g.add(Line(
-            start=(ex, ey),
-            end=(ex - dy * tip * 0.5 - dx * tip, ey - dx * tip * 0.5 - dy * tip),
-            **s,
-        ))
-        g.add(Line(
-            start=(ex, ey),
-            end=(ex + dy * tip * 0.5 - dx * tip, ey + dx * tip * 0.5 - dy * tip),
-            **s,
-        ))
+    # Horizontal division line at ~30% from top (freezer/fridge split)
+    split_y = d * 0.3
+    g.add(Line(start=(0, split_y), end=(w, split_y), **s))
+    # Handle line on right side (small vertical line)
+    handle_x = w * 0.88
+    handle_top = d * 0.35
+    handle_bot = d * 0.55
+    g.add(Line(start=(handle_x, handle_top), end=(handle_x, handle_bot), **s))
 
 
 def draw_bed(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
-    """Bed: headboard rect + mattress rect + pillow section paths."""
+    """Bed: headboard rect + mattress rect + pillows + mattress edge line."""
     s = _style(style)
     head_h = d * 0.04
     # Headboard
@@ -163,34 +164,62 @@ def draw_bed(
             rx=pillow_h * 0.3, ry=pillow_h * 0.3,
             **s,
         ))
+    # Mattress edge line: separates pillow area from mattress body
+    edge_y = head_h + d * 0.02 + pillow_h + d * 0.02
+    g.add(Line(start=(0, edge_y), end=(w, edge_y), **s))
 
 
 def draw_sofa(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
-    """Sofa: seat cushion (rounded rect) + backrest."""
+    """Sofa: backrest + seat + armrests + cushion division lines."""
     s = _style(style)
     back_d = d * 0.25
+    arm_w = w * 0.08
     # Backrest
     g.add(Rect(insert=(0, 0), size=(w, back_d), **s))
     # Seat (rounded rect)
     g.add(Rect(
-        insert=(0, back_d), size=(w, d - back_d),
-        rx=d * 0.08, ry=d * 0.08, **s,
+        insert=(arm_w, back_d), size=(w - 2 * arm_w, d - back_d),
+        rx=d * 0.06, ry=d * 0.06, **s,
     ))
+    # Left armrest
+    g.add(Rect(
+        insert=(0, back_d), size=(arm_w, d - back_d),
+        rx=arm_w * 0.3, ry=arm_w * 0.3, **s,
+    ))
+    # Right armrest
+    g.add(Rect(
+        insert=(w - arm_w, back_d), size=(arm_w, d - back_d),
+        rx=arm_w * 0.3, ry=arm_w * 0.3, **s,
+    ))
+    # Cushion division lines (2-3 vertical lines based on seat width)
+    seat_w = w - 2 * arm_w
+    n_cushions = 3 if seat_w > 150 else 2
+    for i in range(1, n_cushions):
+        cx = arm_w + seat_w * i / n_cushions
+        g.add(Line(
+            start=(cx, back_d + d * 0.05),
+            end=(cx, d - d * 0.05),
+            **s,
+        ))
 
 
 def draw_wardrobe(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
-    """Wardrobe: rect + door division line + shelf lines."""
+    """Wardrobe: rect + vertical door division + handle circles."""
     s = _style(style)
     g.add(Rect(insert=(0, 0), size=(w, d), **s))
     # Door edge line (near front)
     g.add(Line(start=(0, d * 0.95), end=(w, d * 0.95), **s))
-    # Shelf divisions
-    g.add(Line(start=(0, d * 0.33), end=(w, d * 0.33), **s))
-    g.add(Line(start=(0, d * 0.66), end=(w, d * 0.66), **s))
+    # Vertical center line for double doors
+    g.add(Line(start=(w / 2, 0), end=(w / 2, d * 0.95), **s))
+    # Door handle circles (small circles near center line)
+    handle_y = d * 0.5
+    handle_r = min(w, d) * 0.02
+    g.add(Circle(center=(w / 2 - w * 0.05, handle_y), r=handle_r, **s))
+    g.add(Circle(center=(w / 2 + w * 0.05, handle_y), r=handle_r, **s))
 
 
 def draw_nightstand(
@@ -205,11 +234,21 @@ def draw_nightstand(
 def draw_table(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
-    """Dining/coffee table: rect with inset line."""
+    """Dining/coffee table: rect with inset line + 4 leg circles at corners."""
     s = _style(style)
     g.add(Rect(insert=(0, 0), size=(w, d), **s))
     inset = min(w, d) * 0.08
     g.add(Rect(insert=(inset, inset), size=(w - 2 * inset, d - 2 * inset), **s))
+    # 4 small circles at corners for legs
+    leg_r = min(w, d) * 0.03
+    leg_inset = min(w, d) * 0.06
+    for lx, ly in [
+        (leg_inset, leg_inset),
+        (w - leg_inset, leg_inset),
+        (leg_inset, d - leg_inset),
+        (w - leg_inset, d - leg_inset),
+    ]:
+        g.add(Circle(center=(lx, ly), r=leg_r, **s))
 
 
 def draw_chair(

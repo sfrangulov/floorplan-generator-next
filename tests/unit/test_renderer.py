@@ -537,3 +537,16 @@ def test_window_renders_as_line():
     lines = [el for el in floor.iter() if el.tag.endswith("line")]
     # Should have wall lines + at least 1 window line
     assert len(lines) >= 1, "Expected at least one line in floor group"
+
+
+# R25
+def test_sofa_has_cushion_lines():
+    """Sofa symbol includes cushion division lines."""
+    from floorplan_generator.renderer.symbols.furniture import draw_sofa
+    import svgwrite
+    dwg = svgwrite.Drawing()
+    g = dwg.g()
+    draw_sofa(g, 230, 95, {"stroke": "#000", "fill": "none"})
+    elements = list(g.elements)
+    # Should have more than 2 elements (backrest + seat + armrests + cushion lines)
+    assert len(elements) >= 5, f"Sofa should have >= 5 elements, got {len(elements)}"
