@@ -3,17 +3,12 @@
 from __future__ import annotations
 
 import json
-import random
 import tempfile
 from pathlib import Path
 
-import pytest
-
-from floorplan_generator.core.enums import ApartmentClass, RoomType
-from floorplan_generator.core.geometry import Rectangle
-from floorplan_generator.generator.factory import generate_single, generate_dataset
+from floorplan_generator.core.enums import ApartmentClass
+from floorplan_generator.generator.factory import generate_dataset
 from floorplan_generator.generator.layout_engine import generate_apartment
-from floorplan_generator.generator.room_composer import assign_sizes, determine_composition
 from floorplan_generator.rules.registry import create_default_registry
 from floorplan_generator.rules.rule_engine import RuleStatus
 
@@ -55,7 +50,9 @@ def test_full_pipeline_premium_4room():
 # GI05
 def test_greedy_restart_on_deadend():
     """Greedy dead end triggers restart and eventually succeeds."""
-    result = generate_apartment(ApartmentClass.COMFORT, 2, seed=13, max_restarts=10)
+    result = generate_apartment(
+        ApartmentClass.COMFORT, 2, seed=13, max_restarts=10,
+    )
     assert result is not None
     assert result.apartment is not None
 
@@ -63,7 +60,9 @@ def test_greedy_restart_on_deadend():
 # GI06
 def test_csp_fail_triggers_restart():
     """CSP failure triggers greedy restart."""
-    result = generate_apartment(ApartmentClass.COMFORT, 3, seed=7, max_restarts=10)
+    result = generate_apartment(
+        ApartmentClass.COMFORT, 3, seed=7, max_restarts=10,
+    )
     if result is not None:
         assert result.restart_count >= 0
 
@@ -80,8 +79,8 @@ def test_all_mandatory_rules_pass():
         if r.status == RuleStatus.FAIL
         and registry.get(r.rule_id).is_mandatory
     ]
-    # Allow some flexibility — mandatory rules should mostly pass
-    assert len(mandatory_fails) <= 3, f"Mandatory failures: {[r.rule_id for r in mandatory_fails]}"
+    fail_ids = [r.rule_id for r in mandatory_fails]
+    assert len(mandatory_fails) <= 3, f"Mandatory failures: {fail_ids}"
 
 
 # GI08
@@ -107,7 +106,11 @@ def test_batch_100_unique():
         if result is not None:
             success_count += 1
             key = tuple(
-                (r.room_type, round(r.boundary.bounding_box.x), round(r.boundary.bounding_box.y))
+                (
+                    r.room_type,
+                    round(r.boundary.bounding_box.x),
+                    round(r.boundary.bounding_box.y),
+                )
                 for r in result.apartment.rooms
             )
             layouts.add(key)
