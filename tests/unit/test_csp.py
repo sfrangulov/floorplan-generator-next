@@ -13,7 +13,8 @@ from floorplan_generator.core.enums import (
     SwingDirection,
 )
 from floorplan_generator.core.geometry import Point, Polygon, Rectangle, Segment
-from floorplan_generator.core.models import Door, Room
+from floorplan_generator.core.models import Door, FurnitureItem, Room
+from floorplan_generator.generator.csp.constraints import violates_hard_constraints
 from floorplan_generator.generator.csp.door_placer import place_doors
 from floorplan_generator.generator.csp.furniture_placer import place_furniture
 from floorplan_generator.generator.csp.solver import csp_solve
@@ -459,3 +460,21 @@ def test_furniture_skip_unfittable():
         doors=[door], stoyaks=[], rng=rng,
     )
     assert furniture is not None
+
+
+# CS23
+def test_furniture_entry_clearance():
+    """Furniture must not be placed within 300mm buffer of door swing arc."""
+    room = _room_at(RoomType.BEDROOM, 0, 0, 5000, 5000)
+    door = Door(
+        id="d1", position=Point(x=100, y=0), width=800,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
+        room_from="a", room_to=room.id, wall_orientation="horizontal",
+    )
+    # Place furniture just past the 800mm arc, within 300mm clearance zone
+    item = FurnitureItem(
+        id="f1", furniture_type=FurnitureType.NIGHTSTAND,
+        position=Point(x=200, y=810),  # 10mm past arc edge, within 300mm buffer
+        width=500, depth=425,
+    )
+    assert violates_hard_constraints(item, room, [], [door], [])

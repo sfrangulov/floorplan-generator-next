@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from floorplan_generator.core.enums import FurnitureType
+from floorplan_generator.core.geometry import Rectangle
 from floorplan_generator.core.models import Door, FurnitureItem, Room
 from floorplan_generator.generator.types import Stoyak
 
@@ -46,9 +47,21 @@ def violates_hard_constraints(
         if bb.overlaps(p.bounding_box):
             return True
 
-    # HC03: not blocking door swing arc
+    # HC03: not blocking door swing arc + entry clearance zone
+    _DOOR_ENTRY_CLEARANCE = 300.0
     for door in doors:
-        if bb.overlaps(door.swing_arc):
+        arc = door.swing_arc
+        # Check direct overlap with swing arc
+        if bb.overlaps(arc):
+            return True
+        # Check entry clearance: expanded arc by 300mm on all sides
+        expanded = Rectangle(
+            x=arc.x - _DOOR_ENTRY_CLEARANCE / 2,
+            y=arc.y - _DOOR_ENTRY_CLEARANCE / 2,
+            width=arc.width + _DOOR_ENTRY_CLEARANCE,
+            height=arc.height + _DOOR_ENTRY_CLEARANCE,
+        )
+        if bb.overlaps(expanded):
             return True
 
     # HC04: clearance — minimum front space for key items
