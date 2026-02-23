@@ -81,3 +81,15 @@ def test_furniture_not_overlapping_doors():
                         f"seed={seed}: {item.furniture_type} overlaps door "
                         f"{door.id} arc in {room.room_type}"
                     )
+
+
+# PQ05
+def test_layout_compact_no_excessive_restarts():
+    """Layouts should succeed within reasonable restarts for comfort 2-room."""
+    success_count = 0
+    for seed in range(42, 62):
+        result = _generate(ApartmentClass.COMFORT, 2, seed)
+        if result is not None and result.restart_count <= 8:
+            success_count += 1
+    # At least 8/20 should succeed within 8 restarts
+    assert success_count >= 8, f"Only {success_count}/20 succeeded within 8 restarts"

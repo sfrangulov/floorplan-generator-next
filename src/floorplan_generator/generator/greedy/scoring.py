@@ -19,7 +19,7 @@ W_ADJ = 10.0
 W_WET = 8.0
 W_ZONE = 5.0
 W_BLOCK = 5.0
-W_COMPACT = 3.0
+W_COMPACT = 6.0
 
 _DAY_ROOMS = frozenset({
     RoomType.LIVING_ROOM,
