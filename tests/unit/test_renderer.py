@@ -177,19 +177,21 @@ def test_room_label_render():
 
 # R09
 def test_wall_outer_thick():
-    """Outer walls drawn with thick stroke."""
+    """Outer walls drawn as filled rects with real thickness."""
     room = _make_room(RoomType.LIVING_ROOM, 0, 0, 4000, 4000)
     result = _make_result([room])
     theme = load_theme("blueprint")
     svg = render_svg(result, theme)
-    # Should contain stroke-width matching outer_width
-    assert f'stroke-width="{int(theme.walls.outer_width)}"' in svg or \
-           f'stroke-width="{theme.walls.outer_width}"' in svg
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    rects = floor.findall("svg:rect", ns)
+    assert len(rects) >= 4, "Single room should have 4 outer wall rects"
 
 
 # R10
 def test_wall_inner_thin():
-    """Inner walls drawn with thin stroke when rooms share edge."""
+    """Inner walls drawn as rects thinner than outer walls."""
     r1 = _make_room(RoomType.HALLWAY, 0, 0, 2000, 3000, room_id="r1")
     r2 = _make_room(RoomType.LIVING_ROOM, 2000, 0, 4000, 3000, room_id="r2")
     result = _make_result([r1, r2])
@@ -197,9 +199,9 @@ def test_wall_inner_thin():
     svg = render_svg(result, theme)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    lines = root.findall(".//svg:g[@id='floor']/svg:line", ns)
-    # Should have both outer and inner wall lines
-    assert len(lines) >= 4
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    rects = floor.findall("svg:rect", ns)
+    assert len(rects) >= 6, "Two rooms should have outer + inner wall rects"
 
 
 # R11
@@ -267,7 +269,7 @@ def test_window_rect():
 
 # R14
 def test_window_panes():
-    """Window has pane division lines inside floor group."""
+    """Window has line elements inside floor group (walls are now rects)."""
     window = Window(
         id="w1", position=Point(x=1000, y=0),
         width=1500.0, height=1500.0, wall_side="north",
@@ -282,8 +284,8 @@ def test_window_panes():
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor_group = root.findall(".//svg:g[@id='floor']", ns)[0]
     lines = floor_group.findall("svg:line", ns)
-    # Should have wall lines + at least 3 pane division lines
-    assert len(lines) >= 3
+    # Walls are rects now; lines are only from windows (at least 1 window line)
+    assert len(lines) >= 1
 
 
 # R15
@@ -591,3 +593,41 @@ def test_coordinate_mapper_reduced_padding():
     room = _make_room(RoomType.LIVING_ROOM, 0, 0, 10000, 10000)
     mapper = CoordinateMapper([room], 2000, 2000)
     assert mapper.padding == 50
+
+
+# R30
+def test_walls_rendered_as_rects():
+    """Walls are rendered as filled <rect> elements, not <line> elements."""
+    r1 = _make_room(RoomType.HALLWAY, 0, 0, 3000, 2000, room_id="r1")
+    r2 = _make_room(RoomType.LIVING_ROOM, 3000, 0, 5000, 4000, room_id="r2")
+    result = _make_result([r1, r2])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    assert floor is not None
+    rects = floor.findall("svg:rect", ns)
+    lines = floor.findall("svg:line", ns)
+    # Should have rects for walls, not lines
+    assert len(rects) >= 4, f"Expected wall rects, got {len(rects)} rects and {len(lines)} lines"
+
+
+# R31
+def test_wall_opening_for_door():
+    """Wall with a door has a gap — rendered as two rect segments."""
+    door = Door(
+        id="d1", position=Point(x=3000, y=500), width=800.0,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
+        room_from="r1", room_to="r2", wall_orientation="vertical",
+    )
+    r1 = _make_room(RoomType.HALLWAY, 0, 0, 3000, 2000, room_id="r1", doors=[door])
+    r2 = _make_room(RoomType.LIVING_ROOM, 3000, 0, 5000, 4000, room_id="r2", doors=[door])
+    result = _make_result([r1, r2])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    rects = floor.findall("svg:rect", ns)
+    # The shared vertical wall has a door gap, so wall is split into pieces
+    # Plus other wall segments. More rects than a simple 2-room layout without door.
+    assert len(rects) >= 6, f"Expected split wall rects due to door, got {len(rects)}"

@@ -38,10 +38,10 @@ def test_floor_group_contains_walls_and_doors():
             floor = el
             break
     assert floor is not None
-    # Should have line elements (walls) and path elements (door arcs)
-    lines = [el for el in floor.iter() if el.tag.endswith("line")]
+    # Should have rect elements (walls) and path elements (door arcs)
+    rects = [el for el in floor.iter() if el.tag.endswith("rect")]
     paths = [el for el in floor.iter() if el.tag.endswith("path")]
-    assert len(lines) >= 4, f"Floor should have wall lines, got {len(lines)}"
+    assert len(rects) >= 4, f"Floor should have wall rects, got {len(rects)}"
     assert len(paths) >= 1, f"Floor should have door arc paths, got {len(paths)}"
 
 
