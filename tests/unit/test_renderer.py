@@ -490,3 +490,28 @@ def test_room_group_ids_have_type_prefix():
     assert len(r1[0].findall("svg:polygon", ns)) >= 1
     assert len(s1[0].findall("svg:polygon", ns)) >= 1
     assert len(c1[0].findall("svg:polygon", ns)) >= 1
+
+
+# R23
+def test_door_renders_bezier_arc():
+    """Door swing arc is rendered as a bezier curve path in the floor group."""
+    door = Door(
+        id="d1", position=Point(x=2000, y=500), width=800,
+        door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
+        room_from="a", room_to="b", wall_orientation="vertical",
+    )
+    room = _make_room(
+        RoomType.LIVING_ROOM, 0, 0, 4000, 4000, room_id="a", doors=[door],
+    )
+    result = _make_result([room])
+    svg_str = render_svg(result)
+    root = ElementTree.fromstring(svg_str)
+    # Find path elements inside the floor group
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    assert floor is not None
+    arcs = [el for el in floor.iter() if el.tag.endswith("path")]
+    assert len(arcs) >= 1, "Expected at least one arc path in floor group"
+    # Arc path should use SVG arc command (A)
+    d = arcs[0].get("d", "")
+    assert "A" in d or "a" in d, f"Arc path should use arc commands: {d}"
