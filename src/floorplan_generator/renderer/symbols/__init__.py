@@ -1,0 +1,1 @@
+"""Furniture SVG symbol definitions."""
