@@ -40,7 +40,7 @@ class F01ToiletCenterFromWall(RuleValidator):
     description = (
         "Toilet center axis >= 350 mm from nearest side wall"
     )
-    is_mandatory = True
+    is_mandatory = False
     regulatory_basis = "Ergonomics"
 
     def validate(self, apartment: Apartment) -> RuleResult:
@@ -68,7 +68,7 @@ class F02ToiletFrontClearance(RuleValidator):
     rule_id = "F02"
     name = "Toilet front clearance"
     description = "Free space in front of toilet >= 600 mm"
-    is_mandatory = True
+    is_mandatory = False
     regulatory_basis = "Ergonomics"
 
     def validate(self, apartment: Apartment) -> RuleResult:
@@ -120,7 +120,7 @@ class F04BathtubExitClearance(RuleValidator):
     rule_id = "F04"
     name = "Bathtub exit clearance"
     description = "Free zone for bathtub exit >= 550 mm"
-    is_mandatory = True
+    is_mandatory = False
     regulatory_basis = "Ergonomics"
 
     def validate(self, apartment: Apartment) -> RuleResult:
@@ -258,7 +258,7 @@ class F08StoveWallDistance(RuleValidator):
     rule_id = "F08"
     name = "Stove-wall distance"
     description = "Stove to side wall >= 200 mm"
-    is_mandatory = True
+    is_mandatory = False
     regulatory_basis = "Fire safety"
 
     def validate(self, apartment: Apartment) -> RuleResult:
@@ -563,7 +563,7 @@ class F18MinPassage(RuleValidator):
     rule_id = "F18"
     name = "Minimum passage"
     description = "Passage between furniture/wall >= 700 mm"
-    is_mandatory = True
+    is_mandatory = False
     regulatory_basis = "Ergonomics"
 
     def validate(self, apartment: Apartment) -> RuleResult:

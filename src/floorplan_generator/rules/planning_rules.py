@@ -16,7 +16,7 @@ from floorplan_generator.core.enums import (
     RoomType,
     SwingDirection,
 )
-from floorplan_generator.core.models import Apartment, Room
+from floorplan_generator.core.models import Apartment, Door, Room
 from floorplan_generator.rules.rule_engine import (
     MockAlwaysPassRule,
     RuleResult,
@@ -542,11 +542,16 @@ class P22DoorsNotCollide(RuleValidator):
     regulatory_basis = "SP 54"
 
     def validate(self, apartment: Apartment) -> RuleResult:
-        all_d = list(_all_doors(apartment))
-        for i in range(len(all_d)):
-            for j in range(i + 1, len(all_d)):
-                d1 = all_d[i][0]
-                d2 = all_d[j][0]
+        # Deduplicate doors (same door appears in both room_from and room_to)
+        seen: dict[str, Door] = {}
+        for door, _room in _all_doors(apartment):
+            if door.id not in seen:
+                seen[door.id] = door
+        unique_doors = list(seen.values())
+        for i in range(len(unique_doors)):
+            for j in range(i + 1, len(unique_doors)):
+                d1 = unique_doors[i]
+                d2 = unique_doors[j]
                 if d1.swing_arc.overlaps(d2.swing_arc):
                     return self._fail(
                         "Door swing arcs collide",

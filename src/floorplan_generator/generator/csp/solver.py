@@ -66,6 +66,14 @@ def csp_solve(
                 reason=f"furniture_fail:{room.room_type}",
             )
 
+        # Check that required furniture was mostly placed
+        # (fail if room needed furniture but got none)
+        if furniture_list and not furniture:
+            return CSPResult(
+                success=False,
+                reason=f"furniture_fail:{room.room_type}",
+            )
+
         # Update room with doors, windows, furniture
         updated = room.model_copy(update={
             "doors": doors_for_room,
