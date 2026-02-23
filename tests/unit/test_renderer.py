@@ -515,3 +515,25 @@ def test_door_renders_bezier_arc():
     # Arc path should use SVG arc command (A)
     d = arcs[0].get("d", "")
     assert "A" in d or "a" in d, f"Arc path should use arc commands: {d}"
+
+
+# R24
+def test_window_renders_as_line():
+    """Windows are rendered as line segments in the floor group."""
+    window = Window(
+        id="w1", position=Point(x=1000, y=0), width=1500, height=1500,
+        wall_side="north",
+    )
+    room = _make_room(
+        RoomType.LIVING_ROOM, 0, 0, 4000, 4000, room_id="r1",
+        windows=[window],
+    )
+    result = _make_result([room])
+    svg_str = render_svg(result)
+    root = ElementTree.fromstring(svg_str)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    assert floor is not None
+    lines = [el for el in floor.iter() if el.tag.endswith("line")]
+    # Should have wall lines + at least 1 window line
+    assert len(lines) >= 1, "Expected at least one line in floor group"

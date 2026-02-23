@@ -1,4 +1,4 @@
-"""Window rendering: rect + pane division lines."""
+"""Window rendering: simple line segments on exterior walls."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def render_windows(
     mapper: CoordinateMapper,
     theme: Theme,
 ) -> None:
-    """Render all windows with rect and pane lines."""
+    """Render all windows as simple line segments."""
     for room in rooms:
         for window in room.windows:
             _render_single_window(dwg, group, window, mapper, theme)
@@ -30,26 +30,28 @@ def _render_single_window(
     mapper: CoordinateMapper,
     theme: Theme,
 ) -> None:
-    """Render a single window: filled rect + 3 pane lines."""
+    """Render a single window as a line segment along its wall.
+
+    For north/south walls the line is horizontal;
+    for east/west walls the line is vertical.
+    Uses a thicker stroke and round linecaps for clean appearance.
+    """
     pos = mapper.to_svg(window.position)
-    w = mapper.scale_length(window.width)
-    wall_depth = 6.0  # visual wall thickness in SVG units
+    length = mapper.scale_length(window.width)
 
-    # Window rect
-    group.add(dwg.rect(
-        insert=(pos[0], pos[1] - wall_depth / 2),
-        size=(w, wall_depth),
-        fill=theme.windows.fill,
+    if window.wall_side in ("north", "south"):
+        # Horizontal line
+        start = (pos[0], pos[1])
+        end = (pos[0] + length, pos[1])
+    else:
+        # Vertical line (east/west)
+        start = (pos[0], pos[1])
+        end = (pos[0], pos[1] + length)
+
+    group.add(dwg.line(
+        start=start,
+        end=end,
         stroke=theme.windows.stroke,
-        stroke_width=theme.windows.stroke_width,
+        stroke_width=theme.windows.stroke_width * 3,
+        stroke_linecap="round",
     ))
-
-    # Pane division lines (3 lines inside)
-    for frac in [0.25, 0.5, 0.75]:
-        lx = pos[0] + w * frac
-        group.add(dwg.line(
-            start=(lx, pos[1] - wall_depth / 2),
-            end=(lx, pos[1] + wall_depth / 2),
-            stroke=theme.windows.cross_stroke,
-            stroke_width=theme.windows.stroke_width * 0.5,
-        ))
