@@ -57,6 +57,100 @@ _SOFA_TYPES = frozenset({
     FurnitureType.SOFA_4, FurnitureType.SOFA_CORNER,
 })
 
+_BED_WITH_NIGHTSTANDS: frozenset[FurnitureType] = frozenset({
+    FurnitureType.BED_SINGLE, FurnitureType.BED_DOUBLE, FurnitureType.BED_KING,
+})
+
+
+def _nightstand_positions(
+    bed: FurnitureItem,
+    ns_w: float,
+    ns_d: float,
+) -> list[tuple[Point, float]]:
+    """Compute two nightstand positions flanking the bed's headboard.
+
+    Returns [(left_pos, rotation), (right_pos, rotation)].
+    """
+    bx, by = bed.position.x, bed.position.y
+    rotation = bed.rotation
+    w, d = bed.width, bed.depth
+
+    # Effective bed size after rotation
+    rad = math.radians(rotation)
+    cos_a = abs(math.cos(rad))
+    sin_a = abs(math.sin(rad))
+    eff_w = w * cos_a + d * sin_a
+    eff_d = w * sin_a + d * cos_a
+
+    # Effective nightstand size at same rotation
+    ns_eff_w = ns_w * cos_a + ns_d * sin_a
+    ns_eff_d = ns_w * sin_a + ns_d * cos_a
+
+    if rotation == 0.0:
+        # Headboard at top (y=by)
+        left = Point(x=bx - ns_eff_w, y=by)
+        right = Point(x=bx + eff_w, y=by)
+    elif rotation == 180.0:
+        # Headboard at bottom (y=by+eff_d)
+        left = Point(x=bx - ns_eff_w, y=by + eff_d - ns_eff_d)
+        right = Point(x=bx + eff_w, y=by + eff_d - ns_eff_d)
+    elif rotation == 90.0:
+        # Headboard at right (x=bx+eff_w)
+        left = Point(x=bx + eff_w - ns_eff_w, y=by - ns_eff_d)
+        right = Point(x=bx + eff_w - ns_eff_w, y=by + eff_d)
+    elif rotation == 270.0:
+        # Headboard at left (x=bx)
+        left = Point(x=bx, y=by - ns_eff_d)
+        right = Point(x=bx, y=by + eff_d)
+    else:
+        return []
+
+    return [(left, rotation), (right, rotation)]
+
+
+def _try_attach_nightstands(
+    bed: FurnitureItem,
+    room: Room,
+    placed: list[FurnitureItem],
+    doors: list[Door],
+    risers: list[Riser],
+) -> list[FurnitureItem]:
+    """Try to place two nightstands flanking the bed's headboard.
+
+    Returns [ns1, ns2] if both fit, otherwise [].
+    """
+    if FurnitureType.NIGHTSTAND not in FURNITURE_SIZES:
+        return []
+
+    ns_w, ns_d, _ = FURNITURE_SIZES[FurnitureType.NIGHTSTAND]
+    positions = _nightstand_positions(bed, ns_w, ns_d)
+    if len(positions) < 2:
+        return []
+
+    ns1 = FurnitureItem(
+        id=uuid.uuid4().hex[:8],
+        furniture_type=FurnitureType.NIGHTSTAND,
+        position=positions[0][0],
+        width=ns_w,
+        depth=ns_d,
+        rotation=positions[0][1],
+    )
+    if violates_hard_constraints(ns1, room, placed, doors, risers):
+        return []
+
+    ns2 = FurnitureItem(
+        id=uuid.uuid4().hex[:8],
+        furniture_type=FurnitureType.NIGHTSTAND,
+        position=positions[1][0],
+        width=ns_w,
+        depth=ns_d,
+        rotation=positions[1][1],
+    )
+    if violates_hard_constraints(ns2, room, placed + [ns1], doors, risers):
+        return []
+
+    return [ns1, ns2]
+
 
 def _generate_wall_positions(
     item_w: float,
@@ -213,6 +307,14 @@ def _backtrack(
 
         placed.append(item)
 
+        # Bed composite: try attaching nightstands
+        nightstands: list[FurnitureItem] = []
+        if ft in _BED_WITH_NIGHTSTANDS:
+            nightstands = _try_attach_nightstands(
+                item, room, placed, doors, risers,
+            )
+            placed.extend(nightstands)
+
         # Forward checking: verify next item still has valid positions
         if index + 1 < len(items):
             next_ft = items[index + 1]
@@ -237,6 +339,8 @@ def _backtrack(
                         has_valid = True
                         break
                 if not has_valid:
+                    for _ in nightstands:
+                        placed.pop()
                     placed.pop()
                     continue
 
@@ -245,6 +349,19 @@ def _backtrack(
         )
         if result is not None:
             return result
+
+        # Undo nightstands
+        for _ in nightstands:
+            placed.pop()
+
+        # If we had nightstands, retry same bed position without them
+        if nightstands:
+            result = _backtrack(
+                items, index + 1, placed, room, room_bb, doors, risers,
+                rng, step,
+            )
+            if result is not None:
+                return result
 
         placed.pop()
 

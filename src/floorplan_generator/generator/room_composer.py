@@ -117,8 +117,6 @@ OPTIONAL_FURNITURE: dict[RoomType, list[FurnitureType]] = {
         FurnitureType.SHELVING,
     ],
     RoomType.BEDROOM: [
-        FurnitureType.NIGHTSTAND,
-        FurnitureType.NIGHTSTAND,
         FurnitureType.DRESSER,
     ],
     RoomType.CHILDREN: [FurnitureType.BOOKSHELF],
