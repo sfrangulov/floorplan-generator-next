@@ -1045,3 +1045,59 @@ class F33TVFacesSofa(RuleValidator):
                         {"tv_id": tv.id},
                     )
         return self._pass("TV faces sofa OK")
+
+
+# ========== Bathroom essentials (F34) ==========
+
+# Required fixtures per bathroom room type.
+_BATHROOM_ESSENTIALS: dict[
+    RoomType, list[tuple[str, tuple[FurnitureType, ...]]],
+] = {
+    RoomType.BATHROOM: [
+        ("bathtub/shower", (
+            FurnitureType.BATHTUB, FurnitureType.SHOWER,
+        )),
+        ("sink", (
+            FurnitureType.SINK, FurnitureType.DOUBLE_SINK,
+        )),
+    ],
+    RoomType.COMBINED_BATHROOM: [
+        ("bathtub/shower", (
+            FurnitureType.BATHTUB, FurnitureType.SHOWER,
+        )),
+        ("sink", (
+            FurnitureType.SINK, FurnitureType.DOUBLE_SINK,
+        )),
+        ("toilet", (FurnitureType.TOILET_BOWL,)),
+    ],
+    RoomType.TOILET: [
+        ("toilet", (FurnitureType.TOILET_BOWL,)),
+    ],
+}
+
+
+class F34BathroomEssentials(RuleValidator):
+    rule_id = "F34"
+    name = "Bathroom essential fixtures"
+    description = (
+        "Bathrooms must contain essential plumbing: "
+        "bathtub/shower + sink; combined bathroom adds toilet"
+    )
+    is_mandatory = True
+    regulatory_basis = "SP 54.13330"
+
+    def validate(self, apartment: Apartment) -> RuleResult:
+        for room in _rooms_of_type(
+            apartment,
+            RoomType.BATHROOM,
+            RoomType.COMBINED_BATHROOM,
+            RoomType.TOILET,
+        ):
+            reqs = _BATHROOM_ESSENTIALS.get(room.room_type, [])
+            for label, types in reqs:
+                if not items_of_type(room, *types):
+                    return self._fail(
+                        f"{room.room_type.value} missing {label}",
+                        {"room_id": room.id},
+                    )
+        return self._pass("Bathroom essentials OK")

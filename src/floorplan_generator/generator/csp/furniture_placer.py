@@ -66,6 +66,13 @@ _DOWNGRADE: dict[FurnitureType, FurnitureType] = {
     FurnitureType.WASHER_DRYER: FurnitureType.WASHING_MACHINE,
 }
 
+# Essential plumbing fixtures — placed before optional items in wet zones.
+_PLUMBING_ESSENTIALS: frozenset[FurnitureType] = frozenset({
+    FurnitureType.BATHTUB, FurnitureType.SHOWER,
+    FurnitureType.TOILET_BOWL, FurnitureType.SINK,
+    FurnitureType.DOUBLE_SINK, FurnitureType.BIDET,
+})
+
 
 def _nightstand_positions(
     bed: FurnitureItem,
@@ -240,14 +247,16 @@ def place_furniture(
 
     Returns list of placed items or None if placement fails.
     """
-    # Sort by area (large first)
-    def item_area(ft: FurnitureType) -> float:
+    # Sort: plumbing essentials first, then by area (large first).
+    def sort_key(ft: FurnitureType) -> tuple[int, float]:
+        priority = 0 if ft in _PLUMBING_ESSENTIALS else 1
+        area = 0.0
         if ft in FURNITURE_SIZES:
             w, d, _ = FURNITURE_SIZES[ft]
-            return w * d
-        return 0.0
+            area = w * d
+        return (priority, -area)
 
-    sorted_types = sorted(furniture_types, key=item_area, reverse=True)
+    sorted_types = sorted(furniture_types, key=sort_key)
     room_bb = room.boundary.bounding_box
 
     return _backtrack(

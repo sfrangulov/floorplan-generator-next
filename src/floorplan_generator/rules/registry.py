@@ -37,6 +37,7 @@ from floorplan_generator.rules.furniture_rules import (
     F31WasherBackGap,
     F32ToiletRiserDistance,
     F33TVFacesSofa,
+    F34BathroomEssentials,
 )
 from floorplan_generator.rules.planning_rules import (
     P01LivingRoomArea1Room,
@@ -161,7 +162,7 @@ _ALL_RULE_CLASSES: list[type[RuleValidator]] = [
     P37KitchenNotPassthrough,
     P38EntranceDoorExists,
     P39WardrobeConnection,
-    # Furniture rules F01-F32
+    # Furniture rules F01-F34
     F01ToiletCenterFromWall,
     F02ToiletFrontClearance,
     F03SinkFrontClearance,
@@ -195,6 +196,7 @@ _ALL_RULE_CLASSES: list[type[RuleValidator]] = [
     F31WasherBackGap,
     F32ToiletRiserDistance,
     F33TVFacesSofa,
+    F34BathroomEssentials,
 ]
 
 
