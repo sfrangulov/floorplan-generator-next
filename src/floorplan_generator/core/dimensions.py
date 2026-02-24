@@ -165,8 +165,8 @@ FURNITURE_SIZES: dict[FurnitureType, tuple[float, float, float]] = {
     FurnitureType.SHOWER: (900.0, 900.0, 2100.0),
     FurnitureType.SINK: (600.0, 500.0, 850.0),
     FurnitureType.DOUBLE_SINK: (1350.0, 500.0, 850.0),
-    FurnitureType.TOILET_BOWL: (650.0, 375.0, 420.0),
-    FurnitureType.BIDET: (580.0, 375.0, 400.0),
+    FurnitureType.TOILET_BOWL: (375.0, 650.0, 420.0),
+    FurnitureType.BIDET: (375.0, 580.0, 400.0),
     FurnitureType.WASHING_MACHINE: (600.0, 500.0, 850.0),
     FurnitureType.DRYER: (600.0, 550.0, 850.0),
     # Kitchen

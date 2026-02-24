@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import svgwrite.container
 import svgwrite.drawing
 
@@ -41,10 +43,23 @@ def _render_item(
     w = mapper.scale_length(item.width)
     d = mapper.scale_length(item.depth)
 
-    # Create group with transform
-    transform = f"translate({pos[0]},{pos[1]})"
+    # Create group with transform.
+    # When rotating around (w/2, d/2), the bounding box shifts if w != d.
+    # Compensate so the rendered bbox top-left aligns with the placed position.
     if item.rotation != 0:
-        transform += f" rotate({item.rotation},{w / 2},{d / 2})"
+        rad = math.radians(item.rotation)
+        cos_a = abs(math.cos(rad))
+        sin_a = abs(math.sin(rad))
+        eff_w = w * cos_a + d * sin_a
+        eff_h = w * sin_a + d * cos_a
+        offset_x = (eff_w - w) / 2
+        offset_y = (eff_h - d) / 2
+        transform = (
+            f"translate({pos[0] + offset_x},{pos[1] + offset_y})"
+            f" rotate({item.rotation},{w / 2},{d / 2})"
+        )
+    else:
+        transform = f"translate({pos[0]},{pos[1]})"
 
     item_group = dwg.g(transform=transform)
 
