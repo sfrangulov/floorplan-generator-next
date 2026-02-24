@@ -52,6 +52,11 @@ _ROT_FRONT: dict[str, float] = {
 
 _ALL_ROTATIONS = [0.0, 90.0, 180.0, 270.0]
 
+_SOFA_TYPES = frozenset({
+    FurnitureType.SOFA_2, FurnitureType.SOFA_3,
+    FurnitureType.SOFA_4, FurnitureType.SOFA_CORNER,
+})
+
 
 def _generate_wall_positions(
     item_w: float,
@@ -175,7 +180,23 @@ def _backtrack(
 
     w, d, _ = FURNITURE_SIZES[ft]
     positions = _generate_wall_positions(w, d, room_bb, step, ft=ft)
-    rng.shuffle(positions)
+
+    # TV placement preference: try the wall opposite the sofa first.
+    if ft == FurnitureType.TV_STAND:
+        sofa_rots = [
+            p.rotation for p in placed if p.furniture_type in _SOFA_TYPES
+        ]
+        if sofa_rots:
+            target = (sofa_rots[0] + 180) % 360
+            preferred = [(p, r) for p, r in positions if r == target]
+            other = [(p, r) for p, r in positions if r != target]
+            rng.shuffle(preferred)
+            rng.shuffle(other)
+            positions = preferred + other
+        else:
+            rng.shuffle(positions)
+    else:
+        rng.shuffle(positions)
 
     for pos, rotation in positions:
         item = FurnitureItem(

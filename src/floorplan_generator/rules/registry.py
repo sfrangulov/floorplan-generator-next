@@ -36,6 +36,7 @@ from floorplan_generator.rules.furniture_rules import (
     F30EntryZone,
     F31WasherBackGap,
     F32ToiletRiserDistance,
+    F33TVFacesSofa,
 )
 from floorplan_generator.rules.planning_rules import (
     P01LivingRoomArea1Room,
@@ -193,11 +194,12 @@ _ALL_RULE_CLASSES: list[type[RuleValidator]] = [
     F30EntryZone,
     F31WasherBackGap,
     F32ToiletRiserDistance,
+    F33TVFacesSofa,
 ]
 
 
 def create_default_registry() -> RuleRegistry:
-    """Create registry with all P01-P34 and F01-F32 rules."""
+    """Create registry with all rules."""
     registry = RuleRegistry()
     for rule_cls in _ALL_RULE_CLASSES:
         registry.register(rule_cls())

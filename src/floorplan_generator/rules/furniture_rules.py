@@ -1010,3 +1010,38 @@ class F32ToiletRiserDistance(RuleValidator):
                         },
                     )
         return self._pass("Toilet-riser OK")
+
+
+class F33TVFacesSofa(RuleValidator):
+    rule_id = "F33"
+    name = "TV faces sofa"
+    description = "TV stand should be on the wall opposite the sofa"
+    is_mandatory = False
+    regulatory_basis = "Ergonomics"
+
+    _SOFA_TYPES = (
+        FurnitureType.SOFA_2, FurnitureType.SOFA_3,
+        FurnitureType.SOFA_4, FurnitureType.SOFA_CORNER,
+    )
+
+    def validate(self, apartment: Apartment) -> RuleResult:
+        for room in _rooms_of_type(
+            apartment, RoomType.LIVING_ROOM,
+        ):
+            tvs = items_of_type(
+                room, FurnitureType.TV_STAND,
+            )
+            sofas = items_of_type(room, *self._SOFA_TYPES)
+            if not tvs or not sofas:
+                continue
+            for tv in tvs:
+                facing = any(
+                    abs(tv.rotation - s.rotation) == 180
+                    for s in sofas
+                )
+                if not facing:
+                    return self._fail(
+                        "TV not facing sofa",
+                        {"tv_id": tv.id},
+                    )
+        return self._pass("TV faces sofa OK")
