@@ -8,6 +8,7 @@ Procedurally generates realistic floor plans for typical Russian apartments (к�
 
 - **Generation pipeline** — two-phase Greedy + CSP algorithm produces complete furnished layouts
 - **SVG rendering** — layered output with rooms, walls, doors, windows, furniture, and risers
+- **Dimension annotations** — opt-in architectural dimension lines (`--dimensions`) with room-level and overall measurements in meters
 - **PNG export** — rasterized output via CairoSVG
 - **Segmentation masks** — flat-color SVG/PNG for ML datasets with per-pixel semantic class encoding
 - **Themes** — built-in `blueprint` and `colored` themes; bring your own via custom JSON
@@ -32,6 +33,9 @@ floorplan generate --class premium --rooms 3 --count 50 --theme colored
 
 # Generate with PNG and segmentation masks
 floorplan generate --class comfort --rooms 2 --png --mask
+
+# Generate with dimension annotations
+floorplan generate --class comfort --rooms 2 --dimensions
 
 # Re-render existing JSON files with a different theme
 floorplan render --input ./output --output ./colored --theme colored
@@ -58,6 +62,7 @@ floorplan generate [OPTIONS]
 | `--max-restarts` | | `10` | Max generation restarts per apartment |
 | `--png` | | off | Also export PNG renders |
 | `--mask` | | off | Also export segmentation masks |
+| `--dimensions` | `-d` | off | Add dimension annotations (arrows with measurements in meters) |
 
 ### `floorplan render`
 
@@ -74,6 +79,7 @@ floorplan render [OPTIONS]
 | `--theme` | `-t` | `blueprint` | Theme name or path to custom JSON |
 | `--png` | | off | Also export PNG renders |
 | `--mask` | | off | Also export segmentation masks |
+| `--dimensions` | `-d` | off | Add dimension annotations (arrows with measurements in meters) |
 
 ## Architecture
 
@@ -87,7 +93,7 @@ Compose → Greedy → CSP → Validate → Render
 2. **Greedy layout** — places rooms on a canvas using priority-based sequential attachment with scoring (adjacency, zoning, external walls)
 3. **CSP solver** — fills in details via constraint satisfaction: doors on shared walls, windows on external walls, risers in wet zones, furniture with backtracking placement and automatic downgrade fallbacks
 4. **Validate** — checks the result against 72 mandatory and recommended rules (P01–P39 planning, F01–F33 furniture); retries if too many violations
-5. **Render** — produces layered SVG: background → room fills → furniture → walls → doors → windows → risers
+5. **Render** — produces layered SVG: background → room fills → furniture → walls → doors → windows → risers → dimension annotations (opt-in)
 
 ### Segmentation Masks
 
@@ -190,6 +196,7 @@ src/floorplan_generator/
 │       └── constraints.py        # CSP constraint definitions
 └── renderer/
     ├── svg_renderer.py           # Main SVG orchestrator
+    ├── dimension_renderer.py     # Dimension annotation chains (arrows + labels)
     ├── segmentation.py           # Segmentation mask renderer for ML
     ├── outline.py                # Wall polygon computation (Shapely)
     ├── coordinate_mapper.py      # Canvas → SVG coordinate transform
@@ -234,7 +241,8 @@ Theme JSON structure:
   "doors": { "stroke": "#000000" },
   "windows": { "stroke": "#000000", "fill": "#FFFFFF" },
   "furniture": { "stroke": "#000000", "fill": "none" },
-  "riser": { "stroke": "#000000", "fill": "#000000", "radius": 3.0 }
+  "riser": { "stroke": "#000000", "fill": "#000000", "radius": 3.0 },
+  "dimensions": { "stroke": "#000000", "font_size": 16, "offset": 40.0, "precision": 2 }
 }
 ```
 
