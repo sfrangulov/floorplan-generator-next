@@ -43,6 +43,7 @@ def render_walls(
     # Inner walls: thin polygons on shared edges with door openings
     inner_poly = compute_inner_wall_polygons(
         rooms, thickness=inner_t, cut_doors=True,
+        outer_thickness=outer_t,
     )
     if not inner_poly.is_empty:
         path_d = shapely_to_svg_path(inner_poly, mapper)

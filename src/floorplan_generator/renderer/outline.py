@@ -188,13 +188,15 @@ def compute_inner_wall_polygons(
     thickness: float = 75.0,
     *,
     cut_doors: bool = True,
+    outer_thickness: float = 225.0,
 ) -> ShapelyPolygon:
     """Compute interior wall polygons from shared edges.
 
     1. Find shared edges between rooms
     2. Create thin rectangle for each shared edge
     3. Union all rectangles
-    4. Optionally cut door openings
+    4. Subtract outer wall ring to avoid overlap
+    5. Optionally cut door openings
     """
     if len(rooms) < 2:
         return ShapelyPolygon()
@@ -206,10 +208,15 @@ def compute_inner_wall_polygons(
     wall_boxes = [_segment_to_box(seg, thickness) for seg in shared_edges]
     wall_union = unary_union(wall_boxes)
 
-    # Clip to building footprint so inner walls don't overlap outer walls.
+    # Clip inner walls so they don't overlap with outer wall ring.
+    # Inset the footprint by a small margin to guarantee clean
+    # separation from the outer wall polygon.
     room_polys = [_room_to_shapely(r) for r in rooms]
     footprint = unary_union(room_polys)
-    wall_union = wall_union.intersection(footprint)
+    inset = footprint.buffer(
+        -outer_thickness / 2, join_style="mitre", mitre_limit=5.0,
+    )
+    wall_union = wall_union.intersection(inset)
 
     if cut_doors:
         seen_ids: set[str] = set()
