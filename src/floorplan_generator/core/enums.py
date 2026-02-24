@@ -105,6 +105,7 @@ class FurnitureType(StrEnum):
     BIDET = "bidet"
     WASHING_MACHINE = "washing_machine"
     DRYER = "dryer"
+    WASHER_DRYER = "washer_dryer"
     # Kitchen
     STOVE = "stove"
     HOB = "hob"

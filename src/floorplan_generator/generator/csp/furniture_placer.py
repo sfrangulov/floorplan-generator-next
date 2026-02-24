@@ -38,6 +38,7 @@ _BACK_AT_Y0: frozenset[FurnitureType] = frozenset({
 
 _FRONT_AT_Y0: frozenset[FurnitureType] = frozenset({
     FurnitureType.WASHING_MACHINE, FurnitureType.DRYER,
+    FurnitureType.WASHER_DRYER,
     FurnitureType.OVEN, FurnitureType.DISHWASHER, FurnitureType.MICROWAVE,
 })
 
@@ -60,6 +61,10 @@ _SOFA_TYPES = frozenset({
 _BED_WITH_NIGHTSTANDS: frozenset[FurnitureType] = frozenset({
     FurnitureType.BED_SINGLE, FurnitureType.BED_DOUBLE, FurnitureType.BED_KING,
 })
+
+_DOWNGRADE: dict[FurnitureType, FurnitureType] = {
+    FurnitureType.WASHER_DRYER: FurnitureType.WASHING_MACHINE,
+}
 
 
 def _nightstand_positions(
@@ -365,8 +370,38 @@ def _backtrack(
 
         placed.pop()
 
-    # If no valid position found for this item, skip it and continue
-    # with remaining items rather than failing the entire room.
+    # Try downgrade (e.g. WASHER_DRYER -> WASHING_MACHINE)
+    if ft in _DOWNGRADE:
+        fallback_ft = _DOWNGRADE[ft]
+        if fallback_ft in FURNITURE_SIZES:
+            fw, fd, _ = FURNITURE_SIZES[fallback_ft]
+            fb_positions = _generate_wall_positions(
+                fw, fd, room_bb, step, ft=fallback_ft,
+            )
+            rng.shuffle(fb_positions)
+            for fb_pos, fb_rot in fb_positions:
+                fb_item = FurnitureItem(
+                    id=uuid.uuid4().hex[:8],
+                    furniture_type=fallback_ft,
+                    position=fb_pos,
+                    width=fw,
+                    depth=fd,
+                    rotation=fb_rot,
+                )
+                if violates_hard_constraints(
+                    fb_item, room, placed, doors, risers,
+                ):
+                    continue
+                placed.append(fb_item)
+                result = _backtrack(
+                    items, index + 1, placed, room, room_bb,
+                    doors, risers, rng, step,
+                )
+                if result is not None:
+                    return result
+                placed.pop()
+
+    # Skip item entirely
     return _backtrack(
         items, index + 1, placed, room, room_bb, doors, risers, rng, step,
     )

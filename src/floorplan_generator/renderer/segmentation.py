@@ -57,6 +57,7 @@ _FURNITURE_COLORS: dict[FurnitureType, str] = {
     FurnitureType.BIDET: "#0E4682",
     FurnitureType.WASHING_MACHINE: "#6495ED",
     FurnitureType.DRYER: "#5B8BD6",
+    FurnitureType.WASHER_DRYER: "#5A8FD6",
     # Kitchen
     FurnitureType.STOVE: "#FF8C00",
     FurnitureType.HOB: "#EE8200",

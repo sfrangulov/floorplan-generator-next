@@ -365,6 +365,35 @@ def draw_bidet(
     g.add(Circle(center=(w / 2, d * 0.15), r=w * 0.05, **s))
 
 
+def draw_washer_dryer(
+    g: svgwrite.container.Group, w: float, d: float, style: dict,
+) -> None:
+    """Washer+dryer combo: two machines side by side (washer left, dryer right)."""
+    s = _style(style)
+    # Outer rectangle
+    g.add(Rect(insert=(0, 0), size=(w, d), **s))
+    # Vertical dividing line at center
+    g.add(Line(start=(w / 2, 0), end=(w / 2, d), **s))
+    half = w / 2
+
+    # --- Left half: washing machine ---
+    panel_h = d * 0.1
+    g.add(Rect(insert=(0, 0), size=(half, panel_h), **s))
+    r_drum = min(half, d) * 0.38
+    cx_l, cy_l = half / 2, panel_h + (d - panel_h) / 2
+    g.add(Circle(center=(cx_l, cy_l), r=r_drum, **s))
+    g.add(Circle(center=(cx_l, cy_l), r=r_drum * 0.25, **s))
+
+    # --- Right half: dryer ---
+    g.add(Rect(insert=(half, 0), size=(half, panel_h), **s))
+    r_dryer = min(half, d) * 0.35
+    cx_r, cy_r = half + half / 2, panel_h + (d - panel_h) / 2
+    g.add(Circle(center=(cx_r, cy_r), r=r_dryer, **s))
+    g.add(Circle(center=(cx_r, cy_r), r=r_dryer * 0.3, **s))
+    # Vent dot in dryer control panel
+    g.add(Circle(center=(half + half * 0.75, panel_h * 0.5), r=panel_h * 0.25, **s))
+
+
 def draw_dryer(
     g: svgwrite.container.Group, w: float, d: float, style: dict,
 ) -> None:
@@ -624,6 +653,7 @@ FURNITURE_DRAWERS: dict[FurnitureType, Callable] = {
     FurnitureType.BIDET: draw_bidet,
     FurnitureType.WASHING_MACHINE: draw_washing_machine,
     FurnitureType.DRYER: draw_dryer,
+    FurnitureType.WASHER_DRYER: draw_washer_dryer,
     FurnitureType.STOVE: draw_stove,
     FurnitureType.HOB: draw_stove,
     FurnitureType.OVEN: draw_oven,

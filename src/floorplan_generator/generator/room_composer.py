@@ -120,8 +120,8 @@ OPTIONAL_FURNITURE: dict[RoomType, list[FurnitureType]] = {
         FurnitureType.DRESSER,
     ],
     RoomType.CHILDREN: [FurnitureType.BOOKSHELF],
-    RoomType.BATHROOM: [FurnitureType.WASHING_MACHINE],
-    RoomType.COMBINED_BATHROOM: [FurnitureType.WASHING_MACHINE],
+    RoomType.BATHROOM: [FurnitureType.WASHER_DRYER],
+    RoomType.COMBINED_BATHROOM: [FurnitureType.WASHER_DRYER],
 }
 
 
