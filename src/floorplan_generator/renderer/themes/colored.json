@@ -13,7 +13,7 @@
     "outer_fill": "#37474F",
     "inner_fill": "#78909C",
     "outer_thickness": 225.0,
-    "inner_thickness": 100.0
+    "inner_thickness": 75.0
   },
   "rooms": {
     "default_fill": "#F5F5F5",

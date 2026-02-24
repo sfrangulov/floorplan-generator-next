@@ -38,11 +38,9 @@ def test_floor_group_contains_walls_and_doors():
             floor = el
             break
     assert floor is not None
-    # Should have rect elements (walls) and path elements (door arcs)
-    rects = [el for el in floor.iter() if el.tag.endswith("rect")]
+    # Should have path elements (wall polygons + door arcs)
     paths = [el for el in floor.iter() if el.tag.endswith("path")]
-    assert len(rects) >= 4, f"Floor should have wall rects, got {len(rects)}"
-    assert len(paths) >= 1, f"Floor should have door arc paths, got {len(paths)}"
+    assert len(paths) >= 1, f"Floor should have wall/door paths, got {len(paths)}"
 
 
 # SVG03
@@ -63,16 +61,16 @@ def test_furniture_group_contains_furniture():
 
 
 # SVG04
-def test_walls_are_rects_not_lines():
-    """Generated SVG has wall rects (not lines) in floor group."""
+def test_walls_are_paths_not_lines():
+    """Generated SVG has wall paths (not lines) in floor group."""
     result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
     assert result is not None
     svg_str = render_svg(result)
     root = ElementTree.fromstring(svg_str)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    rects = floor.findall("svg:rect", ns)
-    assert len(rects) >= 4, f"Expected wall rects, got {len(rects)}"
+    paths = floor.findall("svg:path", ns)
+    assert len(paths) >= 1, f"Expected wall paths, got {len(paths)}"
 
 
 # SVG05

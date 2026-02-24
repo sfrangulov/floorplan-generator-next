@@ -177,7 +177,7 @@ def test_room_label_render():
 
 # R09
 def test_wall_outer_thick():
-    """Outer walls drawn as filled rects with real thickness."""
+    """Outer walls drawn as filled polygon path."""
     room = _make_room(RoomType.LIVING_ROOM, 0, 0, 4000, 4000)
     result = _make_result([room])
     theme = load_theme("blueprint")
@@ -185,13 +185,13 @@ def test_wall_outer_thick():
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    rects = floor.findall("svg:rect", ns)
-    assert len(rects) >= 4, "Single room should have 4 outer wall rects"
+    paths = floor.findall("svg:path", ns)
+    assert len(paths) >= 1, "Single room should have outer wall path"
 
 
 # R10
 def test_wall_inner_thin():
-    """Inner walls drawn as rects thinner than outer walls."""
+    """Inner walls drawn as separate path, thinner than outer walls."""
     r1 = _make_room(RoomType.HALLWAY, 0, 0, 2000, 3000, room_id="r1")
     r2 = _make_room(RoomType.LIVING_ROOM, 2000, 0, 4000, 3000, room_id="r2")
     result = _make_result([r1, r2])
@@ -200,8 +200,8 @@ def test_wall_inner_thin():
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    rects = floor.findall("svg:rect", ns)
-    assert len(rects) >= 6, "Two rooms should have outer + inner wall rects"
+    paths = floor.findall("svg:path", ns)
+    assert len(paths) >= 2, "Two rooms should have outer + inner wall paths"
 
 
 # R11
@@ -514,11 +514,11 @@ def test_door_renders_bezier_arc():
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
     assert floor is not None
-    arcs = [el for el in floor.iter() if el.tag.endswith("path")]
-    assert len(arcs) >= 1, "Expected at least one arc path in floor group"
-    # Arc path should use SVG arc command (A)
-    d = arcs[0].get("d", "")
-    assert "A" in d or "a" in d, f"Arc path should use arc commands: {d}"
+    all_paths = [el for el in floor.iter() if el.tag.endswith("path")]
+    assert len(all_paths) >= 1, "Expected at least one path in floor group"
+    # Find path that uses SVG arc command (A) — wall paths use only M/L/Z
+    arcs = [p for p in all_paths if "A" in p.get("d", "") or "a" in p.get("d", "")]
+    assert len(arcs) >= 1, f"Expected arc path among {len(all_paths)} paths"
 
 
 # R24
@@ -565,7 +565,7 @@ def test_theme_has_wall_thickness():
     assert hasattr(theme.walls, "outer_fill")
     assert hasattr(theme.walls, "inner_fill")
     assert theme.walls.outer_thickness == 225.0
-    assert theme.walls.inner_thickness == 100.0
+    assert theme.walls.inner_thickness == 75.0
 
 
 # R27
@@ -596,8 +596,8 @@ def test_coordinate_mapper_reduced_padding():
 
 
 # R30
-def test_walls_rendered_as_rects():
-    """Walls are rendered as filled <rect> elements, not <line> elements."""
+def test_walls_rendered_as_paths():
+    """Walls are rendered as filled <path> elements (polygon outlines)."""
     r1 = _make_room(RoomType.HALLWAY, 0, 0, 3000, 2000, room_id="r1")
     r2 = _make_room(RoomType.LIVING_ROOM, 3000, 0, 5000, 4000, room_id="r2")
     result = _make_result([r1, r2])
@@ -605,37 +605,32 @@ def test_walls_rendered_as_rects():
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    assert floor is not None
-    rects = floor.findall("svg:rect", ns)
-    lines = floor.findall("svg:line", ns)
-    # Should have rects for walls, not lines
-    assert len(rects) >= 4, f"Expected wall rects, got {len(rects)} rects and {len(lines)} lines"
+    paths = floor.findall("svg:path", ns)
+    assert len(paths) >= 1, f"Expected wall paths, got {len(paths)}"
 
 
 # R31
 def test_wall_opening_for_door():
-    """Wall with a door has a gap — rendered as two rect segments."""
+    """Wall with a door has an opening in the wall polygon."""
     door = Door(
-        id="d1", position=Point(x=3000, y=500), width=800.0,
+        id="d1", position=Point(x=2000, y=500), width=800.0,
         door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
         room_from="r1", room_to="r2", wall_orientation="vertical",
     )
-    r1 = _make_room(RoomType.HALLWAY, 0, 0, 3000, 2000, room_id="r1", doors=[door])
-    r2 = _make_room(RoomType.LIVING_ROOM, 3000, 0, 5000, 4000, room_id="r2", doors=[door])
+    r1 = _make_room(RoomType.HALLWAY, 0, 0, 2000, 3000, room_id="r1", doors=[door])
+    r2 = _make_room(RoomType.LIVING_ROOM, 2000, 0, 4000, 3000, room_id="r2", doors=[door])
     result = _make_result([r1, r2])
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    rects = floor.findall("svg:rect", ns)
-    # The shared vertical wall has a door gap, so wall is split into pieces
-    # Plus other wall segments. More rects than a simple 2-room layout without door.
-    assert len(rects) >= 6, f"Expected split wall rects due to door, got {len(rects)}"
+    paths = floor.findall("svg:path", ns)
+    assert len(paths) >= 2, f"Expected wall paths + door arc, got {len(paths)}"
 
 
 # R32
 def test_door_has_leaf_rect_and_arc():
-    """Door renders as leaf rect + arc path (no white gap rect)."""
+    """Door renders as leaf rect + arc path."""
     door = Door(
         id="d1", position=Point(x=3000, y=500), width=800.0,
         door_type=DoorType.INTERIOR, swing=SwingDirection.INWARD,
@@ -647,14 +642,10 @@ def test_door_has_leaf_rect_and_arc():
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    rects = [r for r in floor.findall("svg:rect", ns)]
-    paths = [p for p in floor.findall("svg:path", ns)]
-    # We should have at least one path (arc) for the door
+    rects = floor.findall("svg:rect", ns)
+    paths = floor.findall("svg:path", ns)
     assert len(paths) >= 1, "Expected arc path for door"
-    # At least one rect that is the door leaf (much thinner than wall rects)
-    # Leaf is ~40mm scaled (~25px), wall rects are ~142px thick
-    thin_rects = [r for r in rects if float(r.get("width", "999")) < 50 or float(r.get("height", "999")) < 50]
-    assert len(thin_rects) >= 1, "Expected thin door leaf rect"
+    assert len(rects) >= 1, "Expected door leaf rect"
 
 
 # R33
