@@ -7,7 +7,7 @@ from floorplan_generator.generator.layout_engine import generate_apartment
 
 
 def _generate(apartment_class: ApartmentClass, num_rooms: int, seed: int):
-    return generate_apartment(apartment_class, num_rooms, seed, max_restarts=20)
+    return generate_apartment(apartment_class, num_rooms, seed, max_restarts=50)
 
 
 # PQ01

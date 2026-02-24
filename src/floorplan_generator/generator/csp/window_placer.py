@@ -15,20 +15,28 @@ _WINDOW_SIZES = [600, 700, 900, 1200, 1500, 1800]
 _WINDOW_HEIGHT = 1500.0
 
 
+def _compute_footprint(rooms: list[Room]) -> Rectangle:
+    """Compute the building footprint as bounding box of all rooms."""
+    all_bbs = [r.boundary.bounding_box for r in rooms]
+    min_x = min(bb.x for bb in all_bbs)
+    min_y = min(bb.y for bb in all_bbs)
+    max_x = max(bb.x + bb.width for bb in all_bbs)
+    max_y = max(bb.y + bb.height for bb in all_bbs)
+    return Rectangle(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y)
+
+
 def _external_wall_segments(
     room: Room,
-    canvas: Rectangle,
+    footprint: Rectangle,
 ) -> list[Segment]:
-    """Get wall segments that lie on or near the canvas boundary.
+    """Get wall segments that lie on or near the building perimeter.
 
     A wall is considered external if it is parallel to and within ``eps``
-    of a canvas edge.  For vertical walls we compare the constant x
+    of a footprint edge.  For vertical walls we compare the constant x
     coordinate; for horizontal walls we compare the constant y
-    coordinate.  This avoids misclassifying interior walls that happen
-    to have their midpoint near an edge.
+    coordinate.
 
-    Uses a 250mm tolerance to account for greedy layout grid snapping,
-    which can leave gaps between room walls and the canvas edge.
+    Uses a 250mm tolerance to account for greedy layout grid snapping.
     """
     segs = wall_segments(room)
     result = []
@@ -40,11 +48,17 @@ def _external_wall_segments(
         is_horizontal = abs(seg.start.y - seg.end.y) < 1
         if is_vertical:
             x = seg.start.x
-            if abs(x - canvas.x) < eps or abs(x - (canvas.x + canvas.width)) < eps:
+            if (
+                abs(x - footprint.x) < eps
+                or abs(x - (footprint.x + footprint.width)) < eps
+            ):
                 result.append(seg)
         elif is_horizontal:
             y = seg.start.y
-            if abs(y - canvas.y) < eps or abs(y - (canvas.y + canvas.height)) < eps:
+            if (
+                abs(y - footprint.y) < eps
+                or abs(y - (footprint.y + footprint.height)) < eps
+            ):
                 result.append(seg)
     return result
 
@@ -58,23 +72,20 @@ def place_windows(
 
     Returns list of {"room": Room, "window": Window}.
     """
+    # Use actual building footprint, not the padded canvas
+    footprint = _compute_footprint(rooms)
+
     results: list[dict] = []
 
     for room in rooms:
         if not room.room_type.requires_window:
             continue
 
-        ext_walls = _external_wall_segments(room, canvas)
+        ext_walls = _external_wall_segments(room, footprint)
         if not ext_walls:
-            # Fallback: use the longest wall for rooms that must have a window.
-            # This represents a light-well or courtyard-facing window.
-            all_walls = [
-                s for s in wall_segments(room) if s.length >= 600
-            ]
-            if all_walls:
-                ext_walls = [max(all_walls, key=lambda s: s.length)]
-            else:
-                continue
+            # Room has no external walls — cannot have windows.
+            # Validation rules will catch this (P12/P13).
+            continue
 
         needed_area_m2 = room.area_m2 * WINDOW_RATIOS["min_ratio"]
         placed_area_m2 = 0.0
@@ -103,8 +114,8 @@ def place_windows(
                 pos = Point(x=wall.start.x, y=mid_y - _WINDOW_HEIGHT / 2)
                 wall_side = (
                     "west"
-                    if abs(wall.start.x - canvas.x)
-                    < abs(wall.start.x - (canvas.x + canvas.width))
+                    if abs(wall.start.x - footprint.x)
+                    < abs(wall.start.x - (footprint.x + footprint.width))
                     else "east"
                 )
             else:
@@ -112,8 +123,8 @@ def place_windows(
                 pos = Point(x=mid_x - width / 2, y=wall.start.y)
                 wall_side = (
                     "north"
-                    if abs(wall.start.y - canvas.y)
-                    < abs(wall.start.y - (canvas.y + canvas.height))
+                    if abs(wall.start.y - footprint.y)
+                    < abs(wall.start.y - (footprint.y + footprint.height))
                     else "south"
                 )
 
