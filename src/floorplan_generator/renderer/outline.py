@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from shapely.geometry import Polygon as ShapelyPolygon, box
+from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import box
 from shapely.ops import unary_union
 
 from floorplan_generator.core.geometry import Segment

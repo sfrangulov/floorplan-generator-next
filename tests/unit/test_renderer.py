@@ -544,8 +544,9 @@ def test_window_renders_as_rects():
 # R25
 def test_sofa_has_cushion_lines():
     """Sofa symbol includes cushion division lines."""
-    from floorplan_generator.renderer.symbols.furniture import draw_sofa
     import svgwrite
+
+    from floorplan_generator.renderer.symbols.furniture import draw_sofa
     dwg = svgwrite.Drawing()
     g = dwg.g()
     draw_sofa(g, 230, 95, {"stroke": "#000", "fill": "none"})
@@ -616,7 +617,10 @@ def test_wall_opening_for_door():
         room_from="r1", room_to="r2", wall_orientation="vertical",
     )
     r1 = _make_room(RoomType.HALLWAY, 0, 0, 2000, 3000, room_id="r1", doors=[door])
-    r2 = _make_room(RoomType.LIVING_ROOM, 2000, 0, 4000, 3000, room_id="r2", doors=[door])
+    r2 = _make_room(
+        RoomType.LIVING_ROOM, 2000, 0, 4000, 3000,
+        room_id="r2", doors=[door],
+    )
     result = _make_result([r1, r2])
     svg = render_svg(result)
     root = _parse_svg(svg)
@@ -689,7 +693,10 @@ def test_wide_window_has_extra_mullions():
 # R35
 def test_all_furniture_types_have_dedicated_drawer():
     """No furniture type falls back to draw_rect_fallback."""
-    from floorplan_generator.renderer.symbols.furniture import get_drawer, draw_rect_fallback
+    from floorplan_generator.renderer.symbols.furniture import (
+        draw_rect_fallback,
+        get_drawer,
+    )
 
     for ft in FurnitureType:
         drawer = get_drawer(ft)
@@ -712,4 +719,31 @@ def test_furniture_group_named_mebel():
     ns = {"svg": "http://www.w3.org/2000/svg"}
     mebel = root.findall("./svg:g[@id='mebel']", ns)
     assert len(mebel) == 1, "Expected <g id='mebel'>"
-    assert root.findall("./svg:g[@id='furniture']", ns) == [], "Should not have id='furniture'"
+    furn = root.findall("./svg:g[@id='furniture']", ns)
+    assert furn == [], "Should not have id='furniture'"
+
+
+# R37
+def test_entrance_door_on_outer_wall():
+    """Entrance door renders leaf + arc on outer wall."""
+    door = Door(
+        id="d1", position=Point(x=0, y=500), width=860.0,
+        door_type=DoorType.ENTRANCE, swing=SwingDirection.INWARD,
+        room_from="outside", room_to="r1", wall_orientation="vertical",
+    )
+    room = _make_room(
+        RoomType.HALLWAY, 0, 0, 2000, 2000,
+        room_id="r1", doors=[door],
+    )
+    result = _make_result([room])
+    svg = render_svg(result)
+    root = _parse_svg(svg)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+    floor = root.find(".//svg:g[@id='floor']", ns)
+    paths = floor.findall("svg:path", ns)
+    rects = floor.findall("svg:rect", ns)
+    # Should have door arc path (+ wall path)
+    arc_paths = [p for p in paths if "A" in p.get("d", "")]
+    assert len(arc_paths) >= 1, "Expected door swing arc"
+    # Should have door leaf rect
+    assert len(rects) >= 1, "Expected door leaf rect"

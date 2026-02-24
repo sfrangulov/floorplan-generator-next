@@ -62,8 +62,10 @@ def _render_single_window(
             fill="none", stroke=color, stroke_width=sw,
         ))
 
-        mullion_positions = _compute_mullion_positions(window.width, _MULLION_SPACING_MM)
-        for mp in mullion_positions:
+        mull_pos = _compute_mullion_positions(
+            window.width, _MULLION_SPACING_MM,
+        )
+        for mp in mull_pos:
             mx = ox + mapper.scale_length(mp) - mullion_w / 2
             group.add(dwg.rect(
                 insert=(mx, gy), size=(mullion_w, mullion_h),
@@ -82,8 +84,10 @@ def _render_single_window(
             fill="none", stroke=color, stroke_width=sw,
         ))
 
-        mullion_positions = _compute_mullion_positions(window.width, _MULLION_SPACING_MM)
-        for mp in mullion_positions:
+        mull_pos = _compute_mullion_positions(
+            window.width, _MULLION_SPACING_MM,
+        )
+        for mp in mull_pos:
             my = oy + mapper.scale_length(mp) - mullion_w / 2
             group.add(dwg.rect(
                 insert=(gx, my), size=(mullion_h, mullion_w),
@@ -91,7 +95,9 @@ def _render_single_window(
             ))
 
 
-def _compute_mullion_positions(window_width_mm: float, spacing_mm: float) -> list[float]:
+def _compute_mullion_positions(
+    window_width_mm: float, spacing_mm: float,
+) -> list[float]:
     """Compute mullion positions along window width.
 
     Always includes edge mullions (at 0 and window_width).

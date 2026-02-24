@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from shapely.geometry import Polygon as ShapelyPolygon
 
 from floorplan_generator.core.enums import DoorType, RoomType, SwingDirection
@@ -95,16 +94,23 @@ def test_inner_wall_with_door_opening():
         room_from="r1", room_to="r2", wall_orientation="vertical",
     )
     r1 = _rect_room(RoomType.HALLWAY, 0, 0, 2000, 3000, room_id="r1", doors=[door])
-    r2 = _rect_room(RoomType.LIVING_ROOM, 2000, 0, 4000, 3000, room_id="r2", doors=[door])
-    inner_no_door = compute_inner_wall_polygons([r1, r2], thickness=75.0, cut_doors=False)
-    inner_with_door = compute_inner_wall_polygons([r1, r2], thickness=75.0, cut_doors=True)
+    r2 = _rect_room(
+        RoomType.LIVING_ROOM, 2000, 0, 4000, 3000,
+        room_id="r2", doors=[door],
+    )
+    inner_no_door = compute_inner_wall_polygons(
+        [r1, r2], thickness=75.0, cut_doors=False,
+    )
+    inner_with_door = compute_inner_wall_polygons(
+        [r1, r2], thickness=75.0, cut_doors=True,
+    )
     assert inner_with_door.area < inner_no_door.area
 
 
 def test_shapely_to_svg_path():
     """Shapely polygon converts to valid SVG path d attribute."""
-    from floorplan_generator.renderer.outline import shapely_to_svg_path
     from floorplan_generator.renderer.coordinate_mapper import CoordinateMapper
+    from floorplan_generator.renderer.outline import shapely_to_svg_path
     room = _rect_room(RoomType.LIVING_ROOM, 0, 0, 4000, 4000)
     mapper = CoordinateMapper([room], 2000, 2000)
     poly = ShapelyPolygon([(0,0),(4000,0),(4000,4000),(0,4000)])
