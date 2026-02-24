@@ -8,6 +8,7 @@ dependencies = [
     "typer>=0.9",
     "lxml>=5.0",
     "svgwrite>=1.4",
+    "shapely>=2.0",
 ]
 
 [project.optional-dependencies]
