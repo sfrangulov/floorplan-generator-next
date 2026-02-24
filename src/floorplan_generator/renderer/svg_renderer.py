@@ -30,7 +30,10 @@ def _compute_margin_mm(rooms: list, theme: Theme) -> float:
     return wall_t + max_outward
 
 
-def render_svg(result: GenerationResult, theme: Theme | None = None) -> str:
+def render_svg(
+    result: GenerationResult, theme: Theme | None = None,
+    *, show_dimensions: bool = False,
+) -> str:
     if theme is None:
         theme = get_default_theme()
 
@@ -65,19 +68,26 @@ def render_svg(result: GenerationResult, theme: Theme | None = None) -> str:
     render_risers(dwg, floor_group, result.risers, mapper, theme)
     dwg.add(floor_group)
 
+    # Layer 5: Dimension annotations
+    if show_dimensions:
+        from .dimension_renderer import render_dimensions
+        render_dimensions(dwg, rooms, mapper, theme)
+
     return dwg.tostring()
 
 
 def render_svg_to_file(
     result: GenerationResult, path: str, theme: Theme | None = None,
+    *, show_dimensions: bool = False,
 ) -> None:
-    svg_content = render_svg(result, theme)
+    svg_content = render_svg(result, theme, show_dimensions=show_dimensions)
     with open(path, "w", encoding="utf-8") as f:
         f.write(svg_content)
 
 
 def render_png(
     result: GenerationResult, theme: Theme | None = None,
+    *, show_dimensions: bool = False,
 ) -> bytes:
     """Render a GenerationResult to PNG bytes via cairosvg."""
     import cairosvg
@@ -85,7 +95,7 @@ def render_png(
     if theme is None:
         theme = get_default_theme()
 
-    svg_str = render_svg(result, theme)
+    svg_str = render_svg(result, theme, show_dimensions=show_dimensions)
     return cairosvg.svg2png(
         bytestring=svg_str.encode("utf-8"),
         output_width=theme.canvas.width,
@@ -95,8 +105,9 @@ def render_png(
 
 def render_png_to_file(
     result: GenerationResult, path: str, theme: Theme | None = None,
+    *, show_dimensions: bool = False,
 ) -> None:
     """Render and save PNG to a file."""
-    png_data = render_png(result, theme)
+    png_data = render_png(result, theme, show_dimensions=show_dimensions)
     with open(path, "wb") as f:
         f.write(png_data)

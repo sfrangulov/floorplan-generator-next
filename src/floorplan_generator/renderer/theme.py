@@ -68,6 +68,18 @@ class TextTheme(BaseModel):
     area_font_size: int = 20
 
 
+class DimensionsTheme(BaseModel):
+    stroke: str = "#000000"
+    stroke_width: float = 0.5
+    font_family: str = "Arial, sans-serif"
+    font_size: int = 16
+    fill: str = "#000000"
+    offset: float = 40.0    # px from outer wall to level-1 chain
+    level_gap: float = 30.0  # px between level-1 and level-2
+    tick_size: float = 5.0   # px perpendicular tick length
+    precision: int = 2       # decimal places
+
+
 class Theme(BaseModel):
     """Complete SVG rendering theme."""
 
@@ -80,6 +92,7 @@ class Theme(BaseModel):
     furniture: FurnitureTheme = FurnitureTheme()
     riser: RiserTheme = RiserTheme()
     text: TextTheme = TextTheme()
+    dimensions: DimensionsTheme = DimensionsTheme()
 
 
 def load_theme(name_or_path: str) -> Theme:

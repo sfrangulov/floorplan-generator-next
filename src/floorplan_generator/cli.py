@@ -29,6 +29,7 @@ def generate(
     max_restarts: int = typer.Option(10, "--max-restarts", help="Max restarts"),
     png: bool = typer.Option(False, "--png", help="Also export PNG renders"),
     mask: bool = typer.Option(False, "--mask", help="Also export segmentation masks"),
+    dimensions: bool = typer.Option(False, "--dimensions", "-d", help="Add dimension annotations"),
 ) -> None:
     """Generate apartment floorplans and save as SVG."""
     from floorplan_generator.generator.factory import generate_dataset
@@ -41,6 +42,7 @@ def generate(
         theme=theme_obj,
         png=png,
         mask=mask,
+        dimensions=dimensions,
     )
     typer.echo(f"Generated {len(metadata)} apartments in {output}")
 
@@ -58,6 +60,7 @@ def render(
     ),
     png: bool = typer.Option(False, "--png", help="Also export PNG renders"),
     mask: bool = typer.Option(False, "--mask", help="Also export segmentation masks"),
+    dimensions: bool = typer.Option(False, "--dimensions", "-d", help="Add dimension annotations"),
 ) -> None:
     """Re-render apartment JSON files to SVG with a different theme."""
     from floorplan_generator.generator.types import GenerationResult
@@ -78,10 +81,10 @@ def render(
     for json_file in json_files:
         result = GenerationResult.model_validate_json(json_file.read_text())
         svg_path = output_dir / f"{json_file.stem}.svg"
-        render_svg_to_file(result, str(svg_path), theme_obj)
+        render_svg_to_file(result, str(svg_path), theme_obj, show_dimensions=dimensions)
         if png:
             png_path = output_dir / f"{json_file.stem}.png"
-            render_png_to_file(result, str(png_path), theme_obj)
+            render_png_to_file(result, str(png_path), theme_obj, show_dimensions=dimensions)
         if mask:
             mask_path = output_dir / f"{json_file.stem}_mask.png"
             render_mask_to_file(result, str(mask_path), theme_obj)
