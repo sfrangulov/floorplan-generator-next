@@ -18,7 +18,7 @@ class CoordinateMapper:
         rooms: list[Room],
         canvas_width: int = 2000,
         canvas_height: int = 2000,
-        padding: int = 50,
+        padding: int = 100,
     ) -> None:
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
