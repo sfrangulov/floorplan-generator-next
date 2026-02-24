@@ -450,7 +450,8 @@ def test_p17_bedroom_passthrough_fail(
     d1 = make_door(room_from=corridor.id, room_to=bedroom.id)
     d2 = make_door(room_from=bedroom.id, room_to=living.id)
     corridor = corridor.model_copy(update={"doors": [d1]})
-    bedroom = bedroom.model_copy(update={"doors": [d2]})
+    bedroom = bedroom.model_copy(update={"doors": [d1, d2]})
+    living = living.model_copy(update={"doors": [d2]})
     apt = make_apartment(
         ApartmentClass.COMFORT, [corridor, bedroom, living], num_rooms=2,
     )

@@ -72,6 +72,7 @@ from floorplan_generator.rules.planning_rules import (
     P32Insolation,
     P33Waterproofing,
     P34Ventilation,
+    P35SingleDoorUtilityRooms,
 )
 from floorplan_generator.rules.rule_engine import (
     RuleResult,
@@ -150,6 +151,7 @@ _ALL_RULE_CLASSES: list[type[RuleValidator]] = [
     P32Insolation,
     P33Waterproofing,
     P34Ventilation,
+    P35SingleDoorUtilityRooms,
     # Furniture rules F01-F32
     F01ToiletCenterFromWall,
     F02ToiletFrontClearance,

@@ -406,12 +406,6 @@ class P17NonPassthroughBedrooms(RuleValidator):
             return self._skip("Single-room apartment")
         for room in _rooms_of_type(apartment, RoomType.BEDROOM):
             door_count = len(room.doors)
-            for other in apartment.rooms:
-                if other.id == room.id:
-                    continue
-                for d in other.doors:
-                    if d.room_to == room.id or d.room_from == room.id:
-                        door_count += 1
             if door_count > 1:
                 return self._fail(
                     f"Bedroom is passthrough ({door_count} doors)",
@@ -765,6 +759,37 @@ class P28DiningNotFacingEntry(RuleValidator):
 
 
 # ========== Mock rules (P29-P34) ==========
+
+class P35SingleDoorUtilityRooms(RuleValidator):
+    rule_id = "P35"
+    name = "Single door in utility rooms"
+    description = (
+        "Storage, bathroom, and toilet must have exactly one door"
+    )
+    is_mandatory = True
+    regulatory_basis = "SP 54"
+
+    _SINGLE_DOOR_TYPES = {
+        RoomType.STORAGE,
+        RoomType.WARDROBE,
+        RoomType.BATHROOM,
+        RoomType.TOILET,
+        RoomType.COMBINED_BATHROOM,
+        RoomType.LAUNDRY,
+    }
+
+    def validate(self, apartment: Apartment) -> RuleResult:
+        for room in apartment.rooms:
+            if room.room_type not in self._SINGLE_DOOR_TYPES:
+                continue
+            door_count = len(room.doors)
+            if door_count != 1:
+                return self._fail(
+                    f"{room.room_type.value} has {door_count} doors, expected 1",
+                    {"room_id": room.id, "door_count": door_count},
+                )
+        return self._pass("Utility rooms have single doors")
+
 
 class P29RoomHeight(MockAlwaysPassRule):
     rule_id = "P29"
