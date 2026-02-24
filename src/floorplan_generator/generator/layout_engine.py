@@ -16,18 +16,22 @@ from floorplan_generator.generator.room_composer import (
 )
 from floorplan_generator.generator.types import GenerationResult
 from floorplan_generator.rules.registry import create_default_registry
-from floorplan_generator.rules.rule_engine import RuleStatus
+from floorplan_generator.rules.rule_engine import RuleResult, RuleStatus
+
+MAX_MANDATORY_FAILURES = 0
 
 
-def _count_mandatory_failures(apartment: Apartment) -> int:
-    """Count how many mandatory rules the apartment violates."""
+def _validate_apartment(apartment: Apartment) -> tuple[int, list[RuleResult]]:
+    """Validate apartment and return (mandatory_failure_count, all_violations)."""
     registry = create_default_registry()
     results = registry.validate_all(apartment)
-    return sum(
+    violations = [r for r in results if r.status in (RuleStatus.FAIL, RuleStatus.WARN)]
+    mandatory_failures = sum(
         1 for r in results
         if r.status == RuleStatus.FAIL
         and registry.get(r.rule_id).is_mandatory
     )
+    return mandatory_failures, violations
 
 
 def generate_apartment(
@@ -78,17 +82,19 @@ def generate_apartment(
             num_rooms=num_rooms,
         )
 
+        # Validate: check mandatory rule failures
+        failures, violations = _validate_apartment(apartment)
+
         result = GenerationResult(
             apartment=apartment,
             risers=[],
             restart_count=restart,
             seed_used=current_seed,
             recommended_violations=csp_result.soft_violations,
+            violations=violations,
         )
 
-        # Validate: check mandatory rule failures
-        failures = _count_mandatory_failures(apartment)
-        if failures <= 3:
+        if failures <= MAX_MANDATORY_FAILURES:
             return result  # Good enough
 
         # Track best result so far

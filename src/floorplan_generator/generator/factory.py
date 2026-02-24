@@ -76,6 +76,7 @@ def generate_dataset(
             "restart_count": result.restart_count,
             "seed_used": result.seed_used,
             "recommended_violations": result.recommended_violations,
+            "violation_count": len(result.violations),
         }
         metadata.append(entry)
 

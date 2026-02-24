@@ -6,6 +6,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
+from floorplan_generator.rules.rule_engine import RuleResult  # noqa: F401
+
 from floorplan_generator.core.enums import (  # noqa: F401
     ApartmentClass,
     FurnitureType,
@@ -101,3 +103,4 @@ class GenerationResult(BaseModel):
     restart_count: int
     seed_used: int
     recommended_violations: int
+    violations: list[RuleResult] = []
