@@ -73,6 +73,12 @@ class CoordinateMapper:
         y = (point.y - self.mm_min_y) * self.scale + self.offset_y
         return (round(x, 1), round(y, 1))
 
+    def to_svg_raw(self, x: float, y: float) -> tuple[float, float]:
+        """Convert mm coordinates to SVG coordinates (no Point needed)."""
+        sx = (x - self.mm_min_x) * self.scale + self.offset_x
+        sy = (y - self.mm_min_y) * self.scale + self.offset_y
+        return (round(sx, 1), round(sy, 1))
+
     def scale_length(self, mm_length: float) -> float:
         """Convert mm length to SVG length (no offset)."""
         return round(mm_length * self.scale, 1)
