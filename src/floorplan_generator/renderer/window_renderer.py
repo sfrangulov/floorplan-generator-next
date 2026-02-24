@@ -49,8 +49,15 @@ def _render_single_window(
 
     is_horizontal = window.wall_side in ("north", "south")
 
+    # Position window entirely within the wall ring (outside the room).
+    # The window.position sits on the room boundary; the wall extends
+    # outward by wall_thickness.
     if is_horizontal:
-        ox, oy = pos[0], pos[1] - w_thick / 2
+        if window.wall_side == "north":
+            ox, oy = pos[0], pos[1] - w_thick
+        else:  # south
+            ox, oy = pos[0], pos[1]
+
         group.add(dwg.rect(
             insert=(ox, oy), size=(w_len, w_thick),
             fill="none", stroke=color, stroke_width=sw,
@@ -72,7 +79,11 @@ def _render_single_window(
                 fill="none", stroke=color, stroke_width=sw,
             ))
     else:
-        ox, oy = pos[0] - w_thick / 2, pos[1]
+        if window.wall_side == "west":
+            ox, oy = pos[0] - w_thick, pos[1]
+        else:  # east
+            ox, oy = pos[0], pos[1]
+
         group.add(dwg.rect(
             insert=(ox, oy), size=(w_thick, w_len),
             fill="none", stroke=color, stroke_width=sw,
