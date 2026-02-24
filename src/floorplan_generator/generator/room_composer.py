@@ -130,11 +130,30 @@ OPTIONAL_FURNITURE: dict[RoomType, list[FurnitureType]] = {
 def determine_composition(
     apartment_class: ApartmentClass,
     num_rooms: int,
+    rng: random.Random | None = None,
 ) -> list[RoomType]:
-    """Determine room composition for given class and room count."""
+    """Determine room composition for given class and room count.
+
+    For 2+ room apartments, randomly chooses between separate
+    bathroom + toilet and a combined bathroom (50/50).
+    """
     base = list(_BASE_COMPOSITIONS[num_rooms])
     extras = _CLASS_EXTRAS.get(apartment_class, [])
-    return base + extras
+    composition = base + extras
+
+    # Optionally merge bathroom + toilet into combined bathroom
+    if (
+        num_rooms >= 2
+        and rng is not None
+        and RoomType.BATHROOM in composition
+        and RoomType.TOILET in composition
+        and rng.random() < 0.5
+    ):
+        composition.remove(RoomType.BATHROOM)
+        composition.remove(RoomType.TOILET)
+        composition.append(RoomType.COMBINED_BATHROOM)
+
+    return composition
 
 
 def assign_sizes(

@@ -42,7 +42,6 @@ def generate_apartment(
     temperature: float = 0.5,
 ) -> GenerationResult | None:
     """Generate a complete apartment: rooms, doors, windows, furniture."""
-    composition = determine_composition(apartment_class, num_rooms)
     best_result: GenerationResult | None = None
     best_failures = float("inf")
 
@@ -50,6 +49,7 @@ def generate_apartment(
         current_seed = seed + restart * 1000
         rng = random.Random(current_seed)
 
+        composition = determine_composition(apartment_class, num_rooms, rng)
         specs = assign_sizes(composition, rng, apartment_class, num_rooms)
         canvas = get_canvas(apartment_class, num_rooms, rng)
 
