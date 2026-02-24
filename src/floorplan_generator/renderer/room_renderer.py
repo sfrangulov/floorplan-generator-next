@@ -9,6 +9,7 @@ import svgwrite.drawing
 from floorplan_generator.core.enums import RoomType
 from floorplan_generator.core.models import Room
 from floorplan_generator.renderer.coordinate_mapper import CoordinateMapper
+from floorplan_generator.renderer.patterns import resolve_fill
 from floorplan_generator.renderer.theme import Theme
 
 _ROOM_NAMES: dict[RoomType, str] = {
@@ -77,6 +78,7 @@ def render_rooms(
     room_ids: dict[str, str],
     mapper: CoordinateMapper,
     theme: Theme,
+    registered_patterns: set[str] | None = None,
 ) -> None:
     """Render room fill polygons and text labels, each in its own <g> group.
 
@@ -87,7 +89,8 @@ def render_rooms(
         group = dwg.g(id=group_id)
 
         points = [mapper.to_svg(pt) for pt in room.boundary.points]
-        fill = theme.rooms.fills.get(room.room_type.value, theme.rooms.default_fill)
+        raw_fill = theme.rooms.fills.get(room.room_type.value, theme.rooms.default_fill)
+        fill = resolve_fill(dwg, raw_fill, f"room-{room.room_type.value}", registered_patterns)
         group.add(dwg.polygon(
             points=points,
             fill=fill,

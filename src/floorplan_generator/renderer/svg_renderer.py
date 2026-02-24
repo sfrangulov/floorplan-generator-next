@@ -51,9 +51,12 @@ def render_svg(
         id="background",
     ))
 
+    # Shared pattern registry to avoid duplicate <pattern> defs
+    registered_patterns: set[str] = set()
+
     # Layer 2: Per-room groups (h1, r1, s1, c1, ...) added directly to dwg
     room_ids = compute_room_group_ids(rooms)
-    render_rooms(dwg, rooms, room_ids, mapper, theme)
+    render_rooms(dwg, rooms, room_ids, mapper, theme, registered_patterns)
 
     # Layer 3: Furniture
     furniture_group = dwg.g(id="mebel")
@@ -62,7 +65,7 @@ def render_svg(
 
     # Layer 4: Floor (walls + doors + windows + risers)
     floor_group = dwg.g(id="floor")
-    render_walls(dwg, floor_group, rooms, mapper, theme)
+    render_walls(dwg, floor_group, rooms, mapper, theme, registered_patterns)
     render_doors(dwg, floor_group, rooms, mapper, theme)
     render_windows(dwg, floor_group, rooms, mapper, theme)
     render_risers(dwg, floor_group, result.risers, mapper, theme)

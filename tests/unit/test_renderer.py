@@ -129,9 +129,9 @@ def test_theme_load_colored():
     """Load colored.json correctly."""
     theme = load_theme("colored")
     assert theme.name == "colored"
-    assert theme.rooms.fills.get("living_room") == "#E3F2FD"
+    assert theme.rooms.fills.get("living_room") == "pattern:wood:#90CAF9"
     assert theme.rooms.fills.get("kitchen") == "#FFF3E0"
-    assert theme.rooms.fills.get("bathroom") == "#E0F7FA"
+    assert theme.rooms.fills.get("bathroom") == "pattern:tile:#80CBC4"
 
 
 # R06

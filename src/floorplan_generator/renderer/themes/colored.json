@@ -20,8 +20,8 @@
     "default_stroke": "#78909C",
     "stroke_width": 0.5,
     "fills": {
-      "living_room": "#E3F2FD",
-      "bedroom": "#E8EAF6",
+      "living_room": "pattern:wood:#90CAF9",
+      "bedroom": "pattern:wood:#9FA8DA",
       "children": "#F3E5F5",
       "cabinet": "#EDE7F6",
       "kitchen": "#FFF3E0",
@@ -30,12 +30,12 @@
       "hallway": "#ECEFF1",
       "corridor": "#ECEFF1",
       "hall": "#CFD8DC",
-      "bathroom": "#E0F7FA",
-      "toilet": "#E0F2F1",
-      "combined_bathroom": "#E0F7FA",
+      "bathroom": "pattern:tile:#80CBC4",
+      "toilet": "pattern:tile:#80CBC4",
+      "combined_bathroom": "pattern:tile:#80CBC4",
       "storage": "#EFEBE9",
       "wardrobe": "#EFEBE9",
-      "laundry": "#E0F7FA",
+      "laundry": "pattern:tile:#80CBC4",
       "balcony": "#E8F5E9"
     }
   },

@@ -10,8 +10,8 @@
     "outer_width": 5.0,
     "inner_stroke": "#333333",
     "inner_width": 2.0,
-    "outer_fill": "#1A1A1A",
-    "inner_fill": "#333333",
+    "outer_fill": "pattern:crosshatch:#1A1A1A",
+    "inner_fill": "pattern:crosshatch:#444444",
     "outer_thickness": 225.0,
     "inner_thickness": 75.0
   },

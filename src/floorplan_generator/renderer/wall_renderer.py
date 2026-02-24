@@ -12,6 +12,7 @@ from floorplan_generator.renderer.outline import (
     compute_outer_wall_polygon,
     shapely_to_svg_path,
 )
+from floorplan_generator.renderer.patterns import resolve_fill
 from floorplan_generator.renderer.theme import Theme
 
 
@@ -21,10 +22,14 @@ def render_walls(
     rooms: list[Room],
     mapper: CoordinateMapper,
     theme: Theme,
+    registered_patterns: set[str] | None = None,
 ) -> None:
     """Render walls as Shapely-computed polygon paths."""
     outer_t = theme.walls.outer_thickness
     inner_t = theme.walls.inner_thickness
+
+    outer_fill = resolve_fill(dwg, theme.walls.outer_fill, "outer-wall", registered_patterns)
+    inner_fill = resolve_fill(dwg, theme.walls.inner_fill, "inner-wall", registered_patterns)
 
     # Outer walls: polygon ring with window/entrance-door openings
     outer_poly = compute_outer_wall_polygon(
@@ -35,7 +40,7 @@ def render_walls(
         if path_d:
             group.add(dwg.path(
                 d=path_d,
-                fill=theme.walls.outer_fill,
+                fill=outer_fill,
                 stroke="none",
                 fill_rule="evenodd",
             ))
@@ -49,7 +54,7 @@ def render_walls(
         if path_d:
             group.add(dwg.path(
                 d=path_d,
-                fill=theme.walls.inner_fill,
+                fill=inner_fill,
                 stroke="none",
                 fill_rule="evenodd",
             ))

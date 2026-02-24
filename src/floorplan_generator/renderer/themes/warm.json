@@ -10,8 +10,8 @@
     "outer_width": 4.0,
     "inner_stroke": "#7A5C4F",
     "inner_width": 1.5,
-    "outer_fill": "#5C3D2E",
-    "inner_fill": "#7A5C4F",
+    "outer_fill": "pattern:brick:#5C3D2E",
+    "inner_fill": "pattern:brick:#7A5C4F",
     "outer_thickness": 225.0,
     "inner_thickness": 75.0
   },
