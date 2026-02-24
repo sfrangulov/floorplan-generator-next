@@ -32,7 +32,7 @@ def _compute_margin_mm(rooms: list, theme: Theme) -> float:
 
 def render_svg(
     result: GenerationResult, theme: Theme | None = None,
-    *, show_dimensions: bool = False,
+    *, show_dimensions: bool = False, show_labels: bool = True,
 ) -> str:
     if theme is None:
         theme = get_default_theme()
@@ -56,7 +56,7 @@ def render_svg(
 
     # Layer 2: Per-room groups (h1, r1, s1, c1, ...) added directly to dwg
     room_ids = compute_room_group_ids(rooms)
-    render_rooms(dwg, rooms, room_ids, mapper, theme, registered_patterns)
+    render_rooms(dwg, rooms, room_ids, mapper, theme, registered_patterns, show_labels=show_labels)
 
     # Layer 3: Furniture
     furniture_group = dwg.g(id="mebel")
@@ -81,16 +81,16 @@ def render_svg(
 
 def render_svg_to_file(
     result: GenerationResult, path: str, theme: Theme | None = None,
-    *, show_dimensions: bool = False,
+    *, show_dimensions: bool = False, show_labels: bool = True,
 ) -> None:
-    svg_content = render_svg(result, theme, show_dimensions=show_dimensions)
+    svg_content = render_svg(result, theme, show_dimensions=show_dimensions, show_labels=show_labels)
     with open(path, "w", encoding="utf-8") as f:
         f.write(svg_content)
 
 
 def render_png(
     result: GenerationResult, theme: Theme | None = None,
-    *, show_dimensions: bool = False,
+    *, show_dimensions: bool = False, show_labels: bool = True,
 ) -> bytes:
     """Render a GenerationResult to PNG bytes via cairosvg."""
     import cairosvg
@@ -98,7 +98,7 @@ def render_png(
     if theme is None:
         theme = get_default_theme()
 
-    svg_str = render_svg(result, theme, show_dimensions=show_dimensions)
+    svg_str = render_svg(result, theme, show_dimensions=show_dimensions, show_labels=show_labels)
     return cairosvg.svg2png(
         bytestring=svg_str.encode("utf-8"),
         output_width=theme.canvas.width,
@@ -108,9 +108,9 @@ def render_png(
 
 def render_png_to_file(
     result: GenerationResult, path: str, theme: Theme | None = None,
-    *, show_dimensions: bool = False,
+    *, show_dimensions: bool = False, show_labels: bool = True,
 ) -> None:
     """Render and save PNG to a file."""
-    png_data = render_png(result, theme, show_dimensions=show_dimensions)
+    png_data = render_png(result, theme, show_dimensions=show_dimensions, show_labels=show_labels)
     with open(path, "wb") as f:
         f.write(png_data)

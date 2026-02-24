@@ -79,10 +79,13 @@ def render_rooms(
     mapper: CoordinateMapper,
     theme: Theme,
     registered_patterns: set[str] | None = None,
+    *,
+    show_labels: bool = True,
 ) -> None:
     """Render room fill polygons and text labels, each in its own <g> group.
 
     Each room gets a <g id="h1">, <g id="r1">, etc. group added directly to dwg.
+    When *show_labels* is False, room name and area text are omitted.
     """
     for room in rooms:
         group_id = room_ids.get(room.id, room.id)
@@ -98,25 +101,26 @@ def render_rooms(
             stroke_width=theme.rooms.stroke_width,
         ))
 
-        centroid = room.boundary.centroid
-        cx, cy = mapper.to_svg(centroid)
-        name = _ROOM_NAMES.get(room.room_type, room.room_type.value)
-        area = f"{room.area_m2:.1f} м²"
-        group.add(dwg.text(
-            name,
-            insert=(cx, cy - 6),
-            text_anchor="middle",
-            font_family=theme.text.font_family,
-            font_size=theme.text.font_size,
-            fill=theme.text.fill,
-        ))
-        group.add(dwg.text(
-            area,
-            insert=(cx, cy + 10),
-            text_anchor="middle",
-            font_family=theme.text.font_family,
-            font_size=theme.text.area_font_size,
-            fill=theme.text.fill,
-        ))
+        if show_labels:
+            centroid = room.boundary.centroid
+            cx, cy = mapper.to_svg(centroid)
+            name = _ROOM_NAMES.get(room.room_type, room.room_type.value)
+            area = f"{room.area_m2:.1f} м²"
+            group.add(dwg.text(
+                name,
+                insert=(cx, cy - 6),
+                text_anchor="middle",
+                font_family=theme.text.font_family,
+                font_size=theme.text.font_size,
+                fill=theme.text.fill,
+            ))
+            group.add(dwg.text(
+                area,
+                insert=(cx, cy + 10),
+                text_anchor="middle",
+                font_family=theme.text.font_family,
+                font_size=theme.text.area_font_size,
+                fill=theme.text.fill,
+            ))
 
         dwg.add(group)

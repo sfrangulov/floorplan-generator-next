@@ -43,6 +43,7 @@ def generate_dataset(
     png: bool = False,
     mask: bool = False,
     dimensions: bool = False,
+    labels: bool = True,
 ) -> list[dict]:
     """Generate a dataset of apartments and save SVG + optional PNG/mask.
 
@@ -68,12 +69,18 @@ def generate_dataset(
 
         # Save SVG
         svg_path = output / f"{filename}.svg"
-        render_svg_to_file(result, str(svg_path), theme, show_dimensions=dimensions)
+        render_svg_to_file(
+            result, str(svg_path), theme,
+            show_dimensions=dimensions, show_labels=labels,
+        )
 
         # Save PNG
         if png:
             png_path = output / f"{filename}.png"
-            render_png_to_file(result, str(png_path), theme, show_dimensions=dimensions)
+            render_png_to_file(
+                result, str(png_path), theme,
+                show_dimensions=dimensions, show_labels=labels,
+            )
 
         # Save segmentation mask
         if mask:

@@ -11,7 +11,7 @@ Procedurally generates realistic floor plans for typical Russian apartments (к�
 - **Dimension annotations** — opt-in architectural dimension lines (`--dimensions`) with room-level and overall measurements in meters
 - **PNG export** — rasterized output via CairoSVG
 - **Segmentation masks** — flat-color SVG/PNG for ML datasets with per-pixel semantic class encoding
-- **Themes** — built-in `blueprint` and `colored` themes; bring your own via custom JSON
+- **Themes** — 12 built-in themes with SVG pattern fills (hatching, crosshatch, brick, tile, wood grain); bring your own via custom JSON
 - **72 validation rules** — 39 planning rules (P01–P39) and 33 furniture rules (F01–F33) based on Russian GOST/SNiP standards and Neufert ergonomics
 - **4 apartment classes** — Economy, Comfort, Business, Premium
 - **1–4 living rooms** — from studios to large family apartments, 17 room types total
@@ -36,6 +36,12 @@ floorplan generate --class comfort --rooms 2 --png --mask
 
 # Generate with dimension annotations
 floorplan generate --class comfort --rooms 2 --dimensions
+
+# Generate without room labels (clean floorplan)
+floorplan generate --class comfort --rooms 2 --no-labels
+
+# Generate random mix of classes, rooms, and themes
+floorplan random-generate --count 48 --seed 0
 
 # Re-render existing JSON files with a different theme
 floorplan render --input ./output --output ./colored --theme colored
@@ -63,6 +69,7 @@ floorplan generate [OPTIONS]
 | `--png` | | off | Also export PNG renders |
 | `--mask` | | off | Also export segmentation masks |
 | `--dimensions` | `-d` | off | Add dimension annotations (arrows with measurements in meters) |
+| `--labels/--no-labels` | | on | Show room names and area labels |
 
 ### `floorplan render`
 
@@ -80,6 +87,24 @@ floorplan render [OPTIONS]
 | `--png` | | off | Also export PNG renders |
 | `--mask` | | off | Also export segmentation masks |
 | `--dimensions` | `-d` | off | Add dimension annotations (arrows with measurements in meters) |
+| `--labels/--no-labels` | | on | Show room names and area labels |
+
+### `floorplan random-generate`
+
+Generate apartments with random class, rooms, theme, and labels. Parameters are distributed proportionally so every apartment class (4), room count (1–4), and theme (12) gets roughly equal coverage. Room labels (name + area) are toggled randomly (~50/50). Useful for creating diverse datasets in one command.
+
+```
+floorplan random-generate [OPTIONS]
+```
+
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--count` | `-n` | `10` | Total number of apartments to generate |
+| `--seed` | `-s` | `42` | Random seed for parameter sampling and generation |
+| `--output` | `-o` | `./output` | Output directory |
+| `--max-restarts` | | `10` | Max generation restarts per apartment |
+| `--png` | | off | Also export PNG renders |
+| `--mask` | | off | Also export segmentation masks |
 
 ## Architecture
 
@@ -202,6 +227,7 @@ src/floorplan_generator/
     ├── coordinate_mapper.py      # Canvas → SVG coordinate transform
     ├── theme.py                  # Theme model & loader
     ├── room_renderer.py          # Room fills & labels
+    ├── patterns.py               # SVG pattern fills (hatch, crosshatch, brick, tile, wood, dots)
     ├── wall_renderer.py          # Outer & inner walls
     ├── door_renderer.py          # Doors with swing arcs
     ├── window_renderer.py        # Window markers
@@ -231,17 +257,17 @@ src/floorplan_generator/
 | Theme | Style |
 |-------|-------|
 | **blueprint** (default) | Classic black-and-white architectural drawing |
-| **colored** | Material Design palette with distinct colors per room type |
+| **colored** | Material Design palette with wood-grain living areas and tile-pattern wet zones |
 | **pastel** | Soft pastel palette — cool purples, gentle pinks, light blues |
-| **monochrome** | Clean grayscale with heavy linework and subtle gray fills |
-| **warm** | Earth tones — terracotta walls, sandy fills, serif typography |
+| **monochrome** | Clean grayscale with crosshatch wall fills and subtle gray rooms |
+| **warm** | Earth tones — brick-pattern walls, sandy fills, serif typography |
 | **dark** | Dark mode with deep navy background and light elements |
 | **watercolor** | Muted washed-out tones with thin linework, serif text |
 | **contrast** | High-contrast diagrammatic — bold walls, vivid accent fills |
 | **rose** | Dusty rose limited palette — warm pinks with muted greens for wet zones |
 | **nordic** | Scandinavian minimalist — cool grays, muted blues, clean Helvetica |
 | **sage** | Natural greens and sage — organic earthy palette with serif text |
-| **technical** | Blue-line technical drafting — dark blue background, cyan linework, monospace font |
+| **technical** | Blue-line technical drafting — dark blue background, hatched walls, monospace font |
 
 ### Custom themes
 
@@ -268,6 +294,20 @@ Theme JSON structure:
 ```
 
 The `rooms.fills` object maps room types to colors (e.g. `"living_room": "#E3F2FD"`).
+
+Fill values support SVG pattern fills via the `"pattern:<name>:<color>"` format:
+
+| Pattern | Syntax | Description |
+|---------|--------|-------------|
+| Solid | `"#E3F2FD"` | Plain color (default) |
+| Hatch | `"pattern:hatch:#000"` | 45° diagonal lines |
+| Crosshatch | `"pattern:crosshatch:#333"` | 45° + 135° crossed lines |
+| Brick | `"pattern:brick:#555"` | Staggered brick layout |
+| Tile | `"pattern:tile:#AAA"` | Square grid (bathrooms) |
+| Wood | `"pattern:wood:#BBB"` | Parallel lines (living areas) |
+| Dots | `"pattern:dots:#CCC"` | Dot stipple |
+
+Works for both `walls.outer_fill` / `walls.inner_fill` and `rooms.fills` values.
 
 ## Development
 
