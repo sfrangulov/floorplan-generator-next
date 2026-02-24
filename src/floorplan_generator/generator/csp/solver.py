@@ -43,6 +43,14 @@ def csp_solve(
         if door.room_to in room_doors:
             room_doors[door.room_to].append(door)
 
+    # Connectivity check: every room must have at least one door
+    for room in rooms:
+        if not room_doors[room.id]:
+            return CSPResult(
+                success=False,
+                reason=f"no_doors:{room.room_type}",
+            )
+
     # Step 2: Place windows
     window_results = place_windows(rooms, canvas, rng)
     room_windows: dict[str, list] = {r.id: [] for r in rooms}
