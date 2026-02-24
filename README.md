@@ -2,17 +2,19 @@
 
 CLI tool for generating synthetic Russian apartment floorplan datasets in SVG format.
 
-Procedurally generates realistic floor plans for typical Russian apartments (квартиры) across four class tiers — from economy studios to premium multi-room layouts — complete with furniture placement, doors, windows, and validation against 66 building-code rules.
+Procedurally generates realistic floor plans for typical Russian apartments (квартиры) across four class tiers — from economy studios to premium multi-room layouts — complete with furniture placement, doors, windows, risers (стояки), and validation against 72 building-code rules.
 
 ## Features
 
 - **Generation pipeline** — two-phase Greedy + CSP algorithm produces complete furnished layouts
-- **SVG rendering** — layered output with rooms, walls, doors, windows, furniture, and risers (стояки)
+- **SVG rendering** — layered output with rooms, walls, doors, windows, furniture, and risers
+- **PNG export** — rasterized output via CairoSVG
+- **Segmentation masks** — flat-color SVG/PNG for ML datasets with per-pixel semantic class encoding
 - **Themes** — built-in `blueprint` and `colored` themes; bring your own via custom JSON
-- **66 validation rules** — 34 planning rules (P01–P34) and 32 furniture rules (F01–F32) based on Russian GOST/SNiP standards and Neufert ergonomics
-- **4 apartment classes** — Economy (экономкласс), Comfort (комфорт), Business (бизнес), Premium (премиум)
-- **1–4 living rooms** — from studios to large family apartments, 16 room types total
-- **60+ furniture items** — beds, sofas, kitchen appliances, bathroom fixtures, storage
+- **72 validation rules** — 39 planning rules (P01–P39) and 33 furniture rules (F01–F33) based on Russian GOST/SNiP standards and Neufert ergonomics
+- **4 apartment classes** — Economy, Comfort, Business, Premium
+- **1–4 living rooms** — from studios to large family apartments, 17 room types total
+- **45 furniture items** — beds, sofas, kitchen appliances, bathroom fixtures, storage, composite items (washer+dryer) with automatic fallback to smaller variants
 - **Deterministic seeds** — reproducible generation with configurable random seeds
 - **JSON + SVG output** — machine-readable apartment data alongside rendered floor plans
 
@@ -27,6 +29,9 @@ floorplan generate
 
 # Generate 50 premium 3-room apartments with colored theme
 floorplan generate --class premium --rooms 3 --count 50 --theme colored
+
+# Generate with PNG and segmentation masks
+floorplan generate --class comfort --rooms 2 --png --mask
 
 # Re-render existing JSON files with a different theme
 floorplan render --input ./output --output ./colored --theme colored
@@ -51,6 +56,8 @@ floorplan generate [OPTIONS]
 | `--output` | `-o` | `./output` | Output directory |
 | `--theme` | `-t` | `blueprint` | Theme name or path to custom JSON |
 | `--max-restarts` | | `10` | Max generation restarts per apartment |
+| `--png` | | off | Also export PNG renders |
+| `--mask` | | off | Also export segmentation masks |
 
 ### `floorplan render`
 
@@ -65,10 +72,12 @@ floorplan render [OPTIONS]
 | `--input` | `-i` | *(required)* | Input directory with JSON files |
 | `--output` | `-o` | *(required)* | Output directory for SVGs |
 | `--theme` | `-t` | `blueprint` | Theme name or path to custom JSON |
+| `--png` | | off | Also export PNG renders |
+| `--mask` | | off | Also export segmentation masks |
 
 ## Architecture
 
-The generation pipeline runs four stages:
+The generation pipeline runs five stages:
 
 ```
 Compose → Greedy → CSP → Validate → Render
@@ -76,56 +85,126 @@ Compose → Greedy → CSP → Validate → Render
 
 1. **Compose** — determines room composition and sizes based on apartment class and room count
 2. **Greedy layout** — places rooms on a canvas using priority-based sequential attachment with scoring (adjacency, zoning, external walls)
-3. **CSP solver** — fills in details via constraint satisfaction: doors on shared walls, windows on external walls, risers in wet zones, furniture with backtracking placement
-4. **Validate** — checks the result against 66 mandatory and recommended rules (P01–P34 planning, F01–F32 furniture); retries if too many violations
+3. **CSP solver** — fills in details via constraint satisfaction: doors on shared walls, windows on external walls, risers in wet zones, furniture with backtracking placement and automatic downgrade fallbacks
+4. **Validate** — checks the result against 72 mandatory and recommended rules (P01–P39 planning, F01–F33 furniture); retries if too many violations
 5. **Render** — produces layered SVG: background → room fills → furniture → walls → doors → windows → risers
+
+### Segmentation Masks
+
+The segmentation renderer produces flat-color images for ML training. Each pixel encodes a semantic class:
+
+| Class IDs | Category |
+|-----------|----------|
+| 0 | Background |
+| 1–17 | Room types |
+| 18–19 | Outer / inner walls |
+| 20 | Door |
+| 21 | Window |
+| 22+ | Furniture types |
+
+### Wall Geometry
+
+Wall polygons (outer and inner) are computed using Shapely. Outer walls are buffered from room boundaries; inner walls are constructed from shared edges between adjacent rooms. Both support cutouts for doors and windows.
+
+## Room Types (17)
+
+| Category | Types |
+|----------|-------|
+| Living | Living room, Bedroom, Children, Cabinet |
+| Kitchen | Kitchen, Kitchen-dining, Kitchen niche |
+| Wet zones | Bathroom, Toilet, Combined bathroom, Laundry |
+| Transit | Hallway, Corridor, Hall |
+| Utility | Storage, Wardrobe, Balcony |
+
+## Furniture (45 items)
+
+| Category | Items |
+|----------|-------|
+| Plumbing (9) | Bathtub, Shower, Sink, Double sink, Toilet bowl, Bidet, Washing machine, Dryer, Washer+dryer |
+| Kitchen (9) | Stove, Hob, Oven, Fridge, Fridge side-by-side, Dishwasher, Kitchen sink, Hood, Microwave |
+| Living room (8) | Sofa 2/3/4-seat, Corner sofa, Armchair, Coffee table, TV stand, Shelving |
+| Bedroom (8) | Bed single/double/king, Nightstand, Dresser, Wardrobe sliding/swing, Vanity |
+| Children (3) | Child bed, Child desk, Child wardrobe |
+| Hallway (4) | Hallway wardrobe, Shoe rack, Bench, Coat rack |
+| General (4) | Dining table, Dining chair, Desk, Bookshelf |
+
+Composite items like `WASHER_DRYER` (1200x550mm) automatically downgrade to `WASHING_MACHINE` (600x500mm) when the room is too small. Nightstands are placed as a pair flanking the bed headboard when space permits.
+
+## Validation Rules (72)
+
+### Planning Rules (P01–P39)
+
+- **P01–P05** — Minimum area requirements (living room, bedroom, kitchen)
+- **P06–P10** — Minimum width constraints (kitchen, corridor, hallway, bathroom)
+- **P11** — Living room aspect ratio
+- **P12–P14** — Window placement and sizing
+- **P15–P19** — Adjacency and connectivity
+- **P20–P23** — Door rules (entrance width, bathroom swing direction, collision detection, gaps)
+- **P24–P25** — Wet zone grouping and ensuite placement
+- **P26–P28** — Recommendations (living room width, central position, dining placement)
+- **P29–P34** — Height, ventilation, waterproofing checks
+- **P35–P39** — Single-door utility rooms, entrance door, wardrobe connection, external wall windows, kitchen passthrough
+
+### Furniture Rules (F01–F33)
+
+- **F01–F05** — Bathroom clearances (toilet, sink, bathtub, outlet distance)
+- **F06–F13** — Kitchen triangle, sink-stove distance, hood height, fridge-stove gap, parallel rows
+- **F14–F16** — Bedroom passages (bed, wardrobe, drawers)
+- **F17–F18** — Safety (oven clearance, minimum passage)
+- **F19–F20** — Dining (table-wall passage, shelf height)
+- **F21–F29** — Living room layout (sofa-armchair distance, furniture ratio, TV placement)
+- **F30–F33** — Entry zone, washer gap, toilet-riser distance, TV faces sofa
 
 ## Project Structure
 
 ```
 src/floorplan_generator/
-├── cli.py                    # Typer CLI entry point
+├── cli.py                        # Typer CLI entry point
 ├── core/
-│   ├── enums.py              # RoomType, ApartmentClass, DoorType
-│   ├── models.py             # Apartment, Room, Door, Window, FurnitureItem
-│   ├── dimensions.py         # Russian building codes & furniture sizes
-│   └── geometry.py           # Point, Polygon, Rectangle, Segment
+│   ├── enums.py                  # RoomType, ApartmentClass, FurnitureType, etc.
+│   ├── models.py                 # Apartment, Room, Door, Window, FurnitureItem
+│   ├── dimensions.py             # Russian building codes & furniture sizes
+│   └── geometry.py               # Point, Polygon, Rectangle, Segment
 ├── rules/
-│   ├── registry.py           # Rule registry (P01–P34, F01–F32)
-│   ├── rule_engine.py        # RuleValidator base class
-│   ├── planning_rules.py     # 34 planning validators
-│   ├── furniture_rules.py    # 32 furniture validators
-│   └── geometry_helpers.py   # Geometry utilities for rules
+│   ├── registry.py               # Rule registry (P01–P39, F01–F33)
+│   ├── rule_engine.py            # RuleValidator base class
+│   ├── planning_rules.py         # 39 planning validators
+│   ├── furniture_rules.py        # 33 furniture validators
+│   └── geometry_helpers.py       # Geometry utilities for rules
 ├── generator/
-│   ├── layout_engine.py      # Orchestrator: Compose → Greedy → CSP
-│   ├── factory.py            # generate_dataset, generate_single
-│   ├── room_composer.py      # Room composition & sizing
-│   ├── types.py              # RoomSpec, GreedyResult, CSPResult
+│   ├── layout_engine.py          # Orchestrator: Compose → Greedy → CSP
+│   ├── factory.py                # generate_dataset, generate_single
+│   ├── room_composer.py          # Room composition & sizing
+│   ├── types.py                  # RoomSpec, GreedyResult, CSPResult, GenerationResult
 │   ├── greedy/
-│   │   ├── engine.py         # Greedy layout with restarts
-│   │   ├── priority.py       # Room placement priority queue
-│   │   ├── candidates.py     # Candidate slot generation
-│   │   └── scoring.py        # Slot scoring function
+│   │   ├── engine.py             # Greedy layout with restarts
+│   │   ├── priority.py           # Room placement priority queue
+│   │   ├── candidates.py         # Candidate slot generation
+│   │   └── scoring.py            # Slot scoring function
 │   └── csp/
-│       ├── solver.py         # CSP orchestrator
-│       ├── door_placer.py    # Door placement on shared walls
-│       ├── window_placer.py  # Window placement on external walls
-│       ├── riser_placer.py  # Riser placement
-│       ├── furniture_placer.py # Furniture with backtracking
-│       └── constraints.py    # CSP constraint definitions
+│       ├── solver.py             # CSP orchestrator
+│       ├── door_placer.py        # Door placement on shared walls
+│       ├── window_placer.py      # Window placement on external walls
+│       ├── riser_placer.py       # Riser placement in wet zones
+│       ├── furniture_placer.py   # Backtracking placement with downgrade fallback
+│       └── constraints.py        # CSP constraint definitions
 └── renderer/
-    ├── svg_renderer.py       # render_svg, render_svg_to_file
-    ├── theme.py              # Theme model & loader
-    ├── coordinate_mapper.py  # Canvas → SVG coordinate transform
-    ├── room_renderer.py      # Room fills & labels
-    ├── wall_renderer.py      # Outer & inner walls
-    ├── door_renderer.py      # Doors with swing arcs
-    ├── window_renderer.py    # Window markers
-    ├── furniture_renderer.py # Furniture shapes
-    ├── riser_renderer.py    # Riser pipe circles
+    ├── svg_renderer.py           # Main SVG orchestrator
+    ├── segmentation.py           # Segmentation mask renderer for ML
+    ├── outline.py                # Wall polygon computation (Shapely)
+    ├── coordinate_mapper.py      # Canvas → SVG coordinate transform
+    ├── theme.py                  # Theme model & loader
+    ├── room_renderer.py          # Room fills & labels
+    ├── wall_renderer.py          # Outer & inner walls
+    ├── door_renderer.py          # Doors with swing arcs
+    ├── window_renderer.py        # Window markers
+    ├── furniture_renderer.py     # Furniture shapes
+    ├── riser_renderer.py         # Riser pipe circles
+    ├── symbols/
+    │   └── furniture.py          # 45 furniture SVG symbol definitions
     └── themes/
-        ├── blueprint.json    # Black & white architectural style
-        └── colored.json      # Material Design colors per room type
+        ├── blueprint.json        # Black & white architectural style
+        └── colored.json          # Material Design colors per room type
 ```
 
 ## Themes
@@ -167,7 +246,7 @@ The `rooms.fills` object maps room types to colors (e.g. `"living_room": "#E3F2F
 # Install with dev dependencies
 uv sync --all-extras
 
-# Run tests
+# Run tests (297 tests across 12 test files)
 pytest
 
 # Run tests with coverage
@@ -186,6 +265,8 @@ ruff format src tests
 - **Pydantic** >= 2.0 — data models and validation
 - **Typer** >= 0.9 — CLI framework
 - **svgwrite** >= 1.4 — SVG generation
+- **Shapely** >= 2.0 — geometry operations (wall polygons, intersections)
+- **CairoSVG** >= 2.7 — SVG to PNG conversion
 - **lxml** >= 5.0 — XML processing
 - **pytest** >= 8.0 — testing
 - **ruff** >= 0.4 — linting and formatting
