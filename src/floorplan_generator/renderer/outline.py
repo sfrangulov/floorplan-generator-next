@@ -206,6 +206,11 @@ def compute_inner_wall_polygons(
     wall_boxes = [_segment_to_box(seg, thickness) for seg in shared_edges]
     wall_union = unary_union(wall_boxes)
 
+    # Clip to building footprint so inner walls don't overlap outer walls.
+    room_polys = [_room_to_shapely(r) for r in rooms]
+    footprint = unary_union(room_polys)
+    wall_union = wall_union.intersection(footprint)
+
     if cut_doors:
         seen_ids: set[str] = set()
         for room in rooms:
