@@ -38,7 +38,7 @@ def generate_apartment(
     apartment_class: ApartmentClass,
     num_rooms: int,
     seed: int,
-    max_restarts: int = 20,
+    max_restarts: int = 50,
     temperature: float = 0.5,
 ) -> GenerationResult | None:
     """Generate a complete apartment: rooms, doors, windows, furniture."""

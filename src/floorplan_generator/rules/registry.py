@@ -75,6 +75,7 @@ from floorplan_generator.rules.planning_rules import (
     P35SingleDoorUtilityRooms,
     P36WindowsOnExternalWalls,
     P37KitchenNotPassthrough,
+    P38EntranceDoorExists,
 )
 from floorplan_generator.rules.rule_engine import (
     RuleResult,
@@ -156,6 +157,7 @@ _ALL_RULE_CLASSES: list[type[RuleValidator]] = [
     P35SingleDoorUtilityRooms,
     P36WindowsOnExternalWalls,
     P37KitchenNotPassthrough,
+    P38EntranceDoorExists,
     # Furniture rules F01-F32
     F01ToiletCenterFromWall,
     F02ToiletFrontClearance,

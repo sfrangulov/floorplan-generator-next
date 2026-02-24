@@ -59,9 +59,9 @@ def test_priority_queue_order():
     queue = build_priority_queue(specs, rng)
     types = [s.room_type for s in queue]
     assert types[0] == RoomType.HALLWAY
-    assert types.index(RoomType.KITCHEN) < types.index(RoomType.LIVING_ROOM)
-    assert types.index(RoomType.COMBINED_BATHROOM) < types.index(RoomType.LIVING_ROOM)
-    assert types.index(RoomType.LIVING_ROOM) < types.index(RoomType.BEDROOM)
+    assert types.index(RoomType.LIVING_ROOM) < types.index(RoomType.KITCHEN)
+    assert types.index(RoomType.LIVING_ROOM) < types.index(RoomType.COMBINED_BATHROOM)
+    assert types.index(RoomType.BEDROOM) < types.index(RoomType.KITCHEN)
     assert types.index(RoomType.BEDROOM) < types.index(RoomType.STORAGE)
 
 

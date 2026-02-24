@@ -12,7 +12,7 @@ from floorplan_generator.renderer.svg_renderer import render_svg
 # SVG01
 def test_generated_svg_has_reference_structure():
     """Full pipeline: generate + render produces SVG with reference structure."""
-    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=50)
     assert result is not None
     svg_str = render_svg(result)
     root = ElementTree.fromstring(svg_str)
@@ -28,7 +28,7 @@ def test_generated_svg_has_reference_structure():
 # SVG02
 def test_floor_group_contains_walls_and_doors():
     """The floor group contains wall lines and door elements."""
-    result = generate_apartment(ApartmentClass.COMFORT, 2, seed=42, max_restarts=20)
+    result = generate_apartment(ApartmentClass.COMFORT, 2, seed=42, max_restarts=50)
     assert result is not None
     svg_str = render_svg(result)
     root = ElementTree.fromstring(svg_str)
@@ -46,7 +46,7 @@ def test_floor_group_contains_walls_and_doors():
 # SVG03
 def test_furniture_group_contains_furniture():
     """The furniture group contains furniture elements."""
-    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=50)
     assert result is not None
     svg_str = render_svg(result)
     root = ElementTree.fromstring(svg_str)
@@ -63,7 +63,7 @@ def test_furniture_group_contains_furniture():
 # SVG04
 def test_walls_are_paths_not_lines():
     """Generated SVG has wall paths (not lines) in floor group."""
-    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=50)
     assert result is not None
     svg_str = render_svg(result)
     root = ElementTree.fromstring(svg_str)
@@ -76,7 +76,7 @@ def test_walls_are_paths_not_lines():
 # SVG05
 def test_mebel_group_exists():
     """Furniture group is named 'mebel'."""
-    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=50)
     assert result is not None
     svg_str = render_svg(result)
     root = ElementTree.fromstring(svg_str)
@@ -88,7 +88,7 @@ def test_mebel_group_exists():
 # SVG06
 def test_text_font_size_is_large():
     """Room labels use font-size >= 20."""
-    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=20)
+    result = generate_apartment(ApartmentClass.ECONOMY, 1, seed=42, max_restarts=50)
     assert result is not None
     svg_str = render_svg(result)
     root = ElementTree.fromstring(svg_str)

@@ -879,6 +879,20 @@ class P35SingleDoorUtilityRooms(RuleValidator):
         return self._pass("Utility rooms have single doors")
 
 
+class P38EntranceDoorExists(RuleValidator):
+    rule_id = "P38"
+    name = "Entrance door exists"
+    description = "Apartment must have at least one entrance door"
+    is_mandatory = True
+    regulatory_basis = "SP 54"
+
+    def validate(self, apartment: Apartment) -> RuleResult:
+        for door, _ in _all_doors(apartment):
+            if door.door_type == DoorType.ENTRANCE:
+                return self._pass("Entrance door found")
+        return self._fail("No entrance door in the apartment")
+
+
 class P29RoomHeight(MockAlwaysPassRule):
     rule_id = "P29"
     name = "Min room height"
