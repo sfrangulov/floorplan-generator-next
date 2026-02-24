@@ -893,6 +893,50 @@ class P38EntranceDoorExists(RuleValidator):
         return self._fail("No entrance door in the apartment")
 
 
+class P39WardrobeConnection(RuleValidator):
+    rule_id = "P39"
+    name = "Wardrobe connected to bedroom or hallway"
+    description = (
+        "Wardrobe must be connected to a bedroom or hallway"
+    )
+    is_mandatory = True
+    regulatory_basis = "Practice"
+
+    _ALLOWED_NEIGHBORS = {
+        RoomType.BEDROOM,
+        RoomType.CHILDREN,
+        RoomType.CABINET,
+        RoomType.HALLWAY,
+        RoomType.CORRIDOR,
+        RoomType.HALL,
+    }
+
+    def validate(self, apartment: Apartment) -> RuleResult:
+        room_map = {r.id: r for r in apartment.rooms}
+        for room in apartment.rooms:
+            if room.room_type != RoomType.WARDROBE:
+                continue
+            if not room.doors:
+                return self._fail(
+                    "Wardrobe has no doors",
+                    {"room_id": room.id},
+                )
+            for door in room.doors:
+                other_id = (
+                    door.room_to if door.room_from == room.id
+                    else door.room_from
+                )
+                other = room_map.get(other_id)
+                if other and other.room_type in self._ALLOWED_NEIGHBORS:
+                    break
+            else:
+                return self._fail(
+                    "Wardrobe not connected to bedroom or hallway",
+                    {"room_id": room.id},
+                )
+        return self._pass("Wardrobe connections OK")
+
+
 class P29RoomHeight(MockAlwaysPassRule):
     rule_id = "P29"
     name = "Min room height"
