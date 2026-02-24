@@ -7,9 +7,10 @@ import uuid
 
 from floorplan_generator.core.dimensions import DOOR_SIZES
 from floorplan_generator.core.enums import DoorType, RoomType, SwingDirection
-from floorplan_generator.core.geometry import Point, Rectangle
+from floorplan_generator.core.geometry import Point, Rectangle, Segment
 from floorplan_generator.core.models import Door, Room
 from floorplan_generator.generator.types import SharedWall
+from floorplan_generator.rules.geometry_helpers import wall_segments
 
 _BATHROOM_TYPES = frozenset({
     RoomType.BATHROOM,
@@ -26,8 +27,6 @@ _FORBIDDEN_PAIRS = frozenset({
 
 def _determine_door_type(type_a: RoomType, type_b: RoomType) -> DoorType:
     """Determine door type based on connected rooms."""
-    if type_a == RoomType.HALLWAY or type_b == RoomType.HALLWAY:
-        return DoorType.ENTRANCE
     if type_a in _BATHROOM_TYPES:
         return DoorType.BATHROOM
     if type_b in _BATHROOM_TYPES:
@@ -159,3 +158,100 @@ def place_doors(
             break
 
     return placed_doors
+
+
+def place_entrance_door(
+    rooms: list[Room],
+    canvas: Rectangle,
+    rng: random.Random,
+    existing_arcs: list[Rectangle] | None = None,
+) -> Door | None:
+    """Place entrance door on an external wall of the hallway."""
+    hallway = next(
+        (r for r in rooms if r.room_type == RoomType.HALLWAY), None,
+    )
+    if hallway is None:
+        return None
+
+    door_width = DOOR_SIZES[DoorType.ENTRANCE][0]
+    eps = 250.0
+    arcs = existing_arcs or []
+
+    # Find external wall segments of the hallway
+    ext_walls: list[Segment] = []
+    for seg in wall_segments(hallway):
+        if seg.length < door_width + 200:
+            continue
+        is_vert = abs(seg.start.x - seg.end.x) < 1
+        is_horiz = abs(seg.start.y - seg.end.y) < 1
+        if is_vert:
+            x = seg.start.x
+            if abs(x - canvas.x) < eps or abs(x - (canvas.x + canvas.width)) < eps:
+                ext_walls.append(seg)
+        elif is_horiz:
+            y = seg.start.y
+            if abs(y - canvas.y) < eps or abs(y - (canvas.y + canvas.height)) < eps:
+                ext_walls.append(seg)
+
+    if not ext_walls:
+        return None
+
+    # Sort walls by length (prefer longest), try each
+    ext_walls.sort(key=lambda s: s.length, reverse=True)
+
+    for wall in ext_walls:
+        is_vertical = abs(wall.start.x - wall.end.x) < 1
+        wall_start = (
+            min(wall.start.y, wall.end.y) if is_vertical
+            else min(wall.start.x, wall.end.x)
+        )
+        wall_end = (
+            max(wall.start.y, wall.end.y) if is_vertical
+            else max(wall.start.x, wall.end.x)
+        )
+
+        # Try positions with 50mm step
+        min_pos = wall_start + 100
+        max_pos = wall_end - door_width - 100
+        if min_pos > max_pos:
+            continue
+
+        positions = []
+        p = min_pos
+        while p <= max_pos:
+            positions.append(p)
+            p += 50.0
+        # Prefer center
+        mid = (min_pos + max_pos) / 2
+        positions.sort(key=lambda v: abs(v - mid))
+
+        for pos in positions:
+            if is_vertical:
+                door_pos = Point(x=wall.start.x, y=pos)
+                arc = Rectangle(
+                    x=door_pos.x, y=door_pos.y,
+                    width=door_width, height=door_width,
+                )
+            else:
+                door_pos = Point(x=pos, y=wall.start.y)
+                arc = Rectangle(
+                    x=door_pos.x, y=door_pos.y,
+                    width=door_width, height=door_width,
+                )
+
+            if any(arc.overlaps(a) for a in arcs):
+                continue
+
+            orientation = "vertical" if is_vertical else "horizontal"
+            return Door(
+                id=uuid.uuid4().hex[:8],
+                position=door_pos,
+                width=door_width,
+                door_type=DoorType.ENTRANCE,
+                swing=SwingDirection.INWARD,
+                room_from=hallway.id,
+                room_to=hallway.id,
+                wall_orientation=orientation,
+            )
+
+    return None

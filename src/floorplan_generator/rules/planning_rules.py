@@ -760,6 +760,94 @@ class P28DiningNotFacingEntry(RuleValidator):
 
 # ========== Mock rules (P29-P34) ==========
 
+class P36WindowsOnExternalWalls(RuleValidator):
+    rule_id = "P36"
+    name = "Windows on external walls only"
+    description = "Windows must be placed on external (perimeter) walls"
+    is_mandatory = True
+    regulatory_basis = "SP 54"
+
+    def validate(self, apartment: Apartment) -> RuleResult:
+        if not apartment.rooms:
+            return self._skip("No rooms")
+
+        # Compute building footprint as bounding box of all rooms
+        all_bbs = [r.boundary.bounding_box for r in apartment.rooms]
+        min_x = min(bb.x for bb in all_bbs)
+        min_y = min(bb.y for bb in all_bbs)
+        max_x = max(bb.x + bb.width for bb in all_bbs)
+        max_y = max(bb.y + bb.height for bb in all_bbs)
+
+        eps = 250.0  # same tolerance as window_placer
+
+        for room in apartment.rooms:
+            for window in room.windows:
+                wp = window.position
+                side = window.wall_side
+                on_perimeter = (
+                    (side == "west" and abs(wp.x - min_x) < eps)
+                    or (side == "east" and abs(wp.x - max_x) < eps)
+                    or (side == "north" and abs(wp.y - min_y) < eps)
+                    or (side == "south" and abs(wp.y - max_y) < eps)
+                )
+                if not on_perimeter:
+                    return self._fail(
+                        f"Window on internal wall in {room.room_type.value}",
+                        {
+                            "room_id": room.id,
+                            "window_id": window.id,
+                            "wall_side": side,
+                        },
+                    )
+        return self._pass("All windows on external walls")
+
+
+class P37KitchenNotPassthrough(RuleValidator):
+    rule_id = "P37"
+    name = "Kitchen not passthrough to living areas"
+    description = (
+        "Kitchen must not serve as a passthrough between "
+        "living room and bedroom"
+    )
+    is_mandatory = True
+    regulatory_basis = "SP 54"
+
+    _LIVING_TYPES = {
+        RoomType.LIVING_ROOM,
+        RoomType.BEDROOM,
+        RoomType.CHILDREN,
+        RoomType.CABINET,
+    }
+
+    def validate(self, apartment: Apartment) -> RuleResult:
+        room_map = {r.id: r for r in apartment.rooms}
+        kitchen_types = {RoomType.KITCHEN, RoomType.KITCHEN_DINING}
+
+        for room in apartment.rooms:
+            if room.room_type not in kitchen_types:
+                continue
+            # Collect living-area neighbors via doors
+            living_neighbors = set()
+            for door in room.doors:
+                other_id = (
+                    door.room_to if door.room_from == room.id
+                    else door.room_from
+                )
+                other = room_map.get(other_id)
+                if other and other.room_type in self._LIVING_TYPES:
+                    living_neighbors.add(other_id)
+            if len(living_neighbors) >= 2:
+                return self._fail(
+                    f"Kitchen is passthrough to {len(living_neighbors)} "
+                    f"living areas",
+                    {
+                        "room_id": room.id,
+                        "living_neighbors": list(living_neighbors),
+                    },
+                )
+        return self._pass("Kitchen not passthrough")
+
+
 class P35SingleDoorUtilityRooms(RuleValidator):
     rule_id = "P35"
     name = "Single door in utility rooms"

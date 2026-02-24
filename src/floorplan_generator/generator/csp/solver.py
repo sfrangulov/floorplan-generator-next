@@ -7,7 +7,7 @@ import random
 from floorplan_generator.core.enums import ApartmentClass
 from floorplan_generator.core.geometry import Rectangle
 from floorplan_generator.core.models import Room
-from floorplan_generator.generator.csp.door_placer import place_doors
+from floorplan_generator.generator.csp.door_placer import place_doors, place_entrance_door
 from floorplan_generator.generator.csp.furniture_placer import place_furniture
 from floorplan_generator.generator.csp.riser_placer import place_risers
 from floorplan_generator.generator.csp.window_placer import place_windows
@@ -26,8 +26,16 @@ def csp_solve(
     # Step 1: Place doors
     door_results = place_doors(rooms, shared_walls, rng)
 
+    # Collect swing arcs from internal doors for collision avoidance
+    internal_arcs = [dr["door"].swing_arc for dr in door_results]
+
+    # Place entrance door on external wall of hallway
+    entrance = place_entrance_door(rooms, canvas, rng, existing_arcs=internal_arcs)
+
     # Assign doors to rooms
     room_doors: dict[str, list] = {r.id: [] for r in rooms}
+    if entrance is not None:
+        room_doors[entrance.room_from].append(entrance)
     for dr in door_results:
         door = dr["door"]
         if door.room_from in room_doors:
