@@ -102,24 +102,42 @@ def _window_opening_box(window, wall_thickness: float) -> ShapelyPolygon:
     """Create a rectangular cutout for a window opening."""
     pos = window.position
     w = window.width
-    half_t = wall_thickness / 2.0 + 10.0
+    margin = 10.0
 
-    if window.wall_side in ("north", "south"):
-        return box(pos.x, pos.y - half_t, pos.x + w, pos.y + half_t)
-    else:
-        return box(pos.x - half_t, pos.y, pos.x + half_t, pos.y + w)
+    # Wall extends outward by full wall_thickness from room boundary.
+    if window.wall_side == "north":
+        return box(
+            pos.x, pos.y - wall_thickness - margin,
+            pos.x + w, pos.y + margin,
+        )
+    elif window.wall_side == "south":
+        return box(
+            pos.x, pos.y - margin,
+            pos.x + w, pos.y + wall_thickness + margin,
+        )
+    elif window.wall_side == "west":
+        return box(
+            pos.x - wall_thickness - margin, pos.y,
+            pos.x + margin, pos.y + w,
+        )
+    else:  # east
+        return box(
+            pos.x - margin, pos.y,
+            pos.x + wall_thickness + margin, pos.y + w,
+        )
 
 
 def _door_opening_box(door, wall_thickness: float) -> ShapelyPolygon:
     """Create a rectangular cutout for a door opening."""
     pos = door.position
     w = door.width
-    half_t = wall_thickness / 2.0 + 10.0
+    # Full thickness + margin to cut through entire wall ring.
+    ext = wall_thickness + 10.0
 
     if door.wall_orientation == "horizontal":
-        return box(pos.x, pos.y - half_t, pos.x + w, pos.y + half_t)
+        return box(pos.x, pos.y - ext, pos.x + w, pos.y + ext)
     else:
-        return box(pos.x - half_t, pos.y, pos.x + half_t, pos.y + w)
+        return box(pos.x - ext, pos.y, pos.x + ext, pos.y + w)
 
 
 def compute_outer_wall_polygon(
