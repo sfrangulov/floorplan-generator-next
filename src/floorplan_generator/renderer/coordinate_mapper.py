@@ -18,7 +18,8 @@ class CoordinateMapper:
         rooms: list[Room],
         canvas_width: int = 2000,
         canvas_height: int = 2000,
-        padding: int = 100,
+        padding: int = 50,
+        margin_mm: float = 0.0,
     ) -> None:
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
@@ -40,10 +41,12 @@ class CoordinateMapper:
             self.mm_min_y = 0.0
             return
 
-        self.mm_min_x = min(all_xs)
-        self.mm_min_y = min(all_ys)
-        mm_max_x = max(all_xs)
-        mm_max_y = max(all_ys)
+        # Expand bounding box by margin to include elements that extend
+        # beyond room boundaries (outer walls, door swing arcs, etc.)
+        self.mm_min_x = min(all_xs) - margin_mm
+        self.mm_min_y = min(all_ys) - margin_mm
+        mm_max_x = max(all_xs) + margin_mm
+        mm_max_y = max(all_ys) + margin_mm
 
         mm_width = mm_max_x - self.mm_min_x
         mm_height = mm_max_y - self.mm_min_y

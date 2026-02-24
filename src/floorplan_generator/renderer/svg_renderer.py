@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import svgwrite
 
+from floorplan_generator.core.enums import SwingDirection
 from floorplan_generator.generator.types import GenerationResult
 from floorplan_generator.renderer.coordinate_mapper import CoordinateMapper
 from floorplan_generator.renderer.door_renderer import render_doors
@@ -17,6 +18,18 @@ from floorplan_generator.renderer.wall_renderer import render_walls
 from floorplan_generator.renderer.window_renderer import render_windows
 
 
+def _compute_margin_mm(rooms: list, theme: Theme) -> float:
+    """Compute mm margin to include outer walls and outward door arcs."""
+    wall_t = theme.walls.outer_thickness
+    # Find max outward-opening door width (entrance doors open outward)
+    max_outward = 0.0
+    for room in rooms:
+        for door in room.doors:
+            if door.swing == SwingDirection.OUTWARD:
+                max_outward = max(max_outward, door.width)
+    return wall_t + max_outward
+
+
 def render_svg(result: GenerationResult, theme: Theme | None = None) -> str:
     if theme is None:
         theme = get_default_theme()
@@ -24,7 +37,8 @@ def render_svg(result: GenerationResult, theme: Theme | None = None) -> str:
     rooms = result.apartment.rooms
     cw = theme.canvas.width
     ch = theme.canvas.height
-    mapper = CoordinateMapper(rooms, cw, ch)
+    margin = _compute_margin_mm(rooms, theme)
+    mapper = CoordinateMapper(rooms, cw, ch, margin_mm=margin)
     dwg = svgwrite.Drawing(size=(f"{cw}px", f"{ch}px"), viewBox=f"0 0 {cw} {ch}")
 
     # Layer 1: Background
