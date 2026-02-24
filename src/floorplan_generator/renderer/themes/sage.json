@@ -1,0 +1,71 @@
+{
+  "name": "sage",
+  "canvas": {
+    "width": 2000,
+    "height": 2000,
+    "background": "#F5F7F2"
+  },
+  "walls": {
+    "outer_stroke": "#3A4A3A",
+    "outer_width": 4.0,
+    "inner_stroke": "#5A6A5A",
+    "inner_width": 1.5,
+    "outer_fill": "#3A4A3A",
+    "inner_fill": "#5A6A5A",
+    "outer_thickness": 225.0,
+    "inner_thickness": 75.0
+  },
+  "rooms": {
+    "default_fill": "#EEF0EA",
+    "default_stroke": "#A8B0A0",
+    "stroke_width": 0.5,
+    "fills": {
+      "living_room": "#D8E4D0",
+      "bedroom": "#D0DCD0",
+      "children": "#E0D8E0",
+      "cabinet": "#CCD8CC",
+      "kitchen": "#E8E0D0",
+      "kitchen_dining": "#EAE4D4",
+      "kitchen_niche": "#EAE4D4",
+      "hallway": "#DEE0DA",
+      "corridor": "#DEE0DA",
+      "hall": "#D0D4CC",
+      "bathroom": "#CCE0DC",
+      "toilet": "#CCDCD4",
+      "combined_bathroom": "#CCE0DC",
+      "storage": "#D4D0C8",
+      "wardrobe": "#D4D0C8",
+      "laundry": "#CCDCD8",
+      "balcony": "#C8DCC4"
+    }
+  },
+  "doors": {
+    "stroke": "#3A4A3A",
+    "stroke_width": 1.0,
+    "arc_stroke": "#7A8A7A",
+    "arc_width": 0.5,
+    "gap_fill": "#F5F7F2"
+  },
+  "windows": {
+    "stroke": "#4A6A4A",
+    "stroke_width": 1.0,
+    "fill": "#E0EEE0",
+    "cross_stroke": "#4A6A4A"
+  },
+  "furniture": {
+    "stroke": "#5A6A5A",
+    "stroke_width": 0.8,
+    "fill": "none"
+  },
+  "riser": {
+    "stroke": "#6A5A4A",
+    "fill": "#8A7A6A",
+    "radius": 3.5
+  },
+  "text": {
+    "font_family": "Georgia, serif",
+    "font_size": 28,
+    "fill": "#3A4A3A",
+    "area_font_size": 20
+  }
+}

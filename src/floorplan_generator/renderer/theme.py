@@ -98,7 +98,9 @@ class Theme(BaseModel):
 def load_theme(name_or_path: str) -> Theme:
     """Load a theme by name (built-in) or file path.
 
-    Built-in themes: 'blueprint', 'colored'.
+    Built-in themes: 'blueprint', 'colored', 'pastel', 'monochrome',
+    'warm', 'dark', 'watercolor', 'contrast', 'rose', 'nordic',
+    'sage', 'technical'.
     Custom themes: pass a path to a JSON file.
     """
     # Try built-in theme first

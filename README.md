@@ -211,16 +211,37 @@ src/floorplan_generator/
     │   └── furniture.py          # 45 furniture SVG symbol definitions
     └── themes/
         ├── blueprint.json        # Black & white architectural style
-        └── colored.json          # Material Design colors per room type
+        ├── colored.json          # Material Design colors per room type
+        ├── pastel.json           # Soft pastel palette
+        ├── monochrome.json       # Clean grayscale with heavy linework
+        ├── warm.json             # Earth tones and terracotta
+        ├── dark.json             # Dark mode / inverted colors
+        ├── watercolor.json       # Muted washed-out tones
+        ├── contrast.json         # High-contrast diagrammatic
+        ├── rose.json             # Dusty rose limited palette
+        ├── nordic.json           # Scandinavian minimalist
+        ├── sage.json             # Natural greens and sage
+        └── technical.json        # Blue-line technical drafting
 ```
 
 ## Themes
 
-### Built-in themes
+### Built-in themes (12)
 
-**blueprint** (default) — classic black-and-white architectural drawing style.
-
-**colored** — Material Design palette with distinct colors per room type: living rooms in blue (#E3F2FD), bedrooms in indigo (#E8EAF6), kitchens in orange (#FFF3E0), bathrooms in cyan (#E0F7FA), and more.
+| Theme | Style |
+|-------|-------|
+| **blueprint** (default) | Classic black-and-white architectural drawing |
+| **colored** | Material Design palette with distinct colors per room type |
+| **pastel** | Soft pastel palette — cool purples, gentle pinks, light blues |
+| **monochrome** | Clean grayscale with heavy linework and subtle gray fills |
+| **warm** | Earth tones — terracotta walls, sandy fills, serif typography |
+| **dark** | Dark mode with deep navy background and light elements |
+| **watercolor** | Muted washed-out tones with thin linework, serif text |
+| **contrast** | High-contrast diagrammatic — bold walls, vivid accent fills |
+| **rose** | Dusty rose limited palette — warm pinks with muted greens for wet zones |
+| **nordic** | Scandinavian minimalist — cool grays, muted blues, clean Helvetica |
+| **sage** | Natural greens and sage — organic earthy palette with serif text |
+| **technical** | Blue-line technical drafting — dark blue background, cyan linework, monospace font |
 
 ### Custom themes
 
