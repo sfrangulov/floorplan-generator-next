@@ -300,7 +300,8 @@ ROOM_PLACEMENT_PRIORITY: dict[RoomType, int] = {
     RoomType.BEDROOM: 6,
     RoomType.CHILDREN: 7,
     RoomType.CABINET: 7,
-    RoomType.STORAGE: 8,
-    RoomType.WARDROBE: 8,
-    RoomType.BALCONY: 9,
+    # Optional rooms — lowest priority
+    RoomType.STORAGE: 10,
+    RoomType.WARDROBE: 10,
+    RoomType.BALCONY: 10,
 }
