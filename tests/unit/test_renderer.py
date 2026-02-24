@@ -247,7 +247,7 @@ def test_door_swing_arc():
 
 # R13
 def test_window_rect():
-    """Window rect rendered inside floor group."""
+    """Window opening rect rendered inside floor group."""
     window = Window(
         id="w1", position=Point(x=1000, y=0),
         width=1500.0, height=1500.0, wall_side="north",
@@ -260,16 +260,15 @@ def test_window_rect():
     svg = render_svg(result)
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-    # Windows are now inside the floor group
     floor_group = root.findall(".//svg:g[@id='floor']", ns)
     assert len(floor_group) == 1
-    # Floor group should have children (walls + windows)
-    assert len(list(floor_group[0])) >= 1
+    rects = floor_group[0].findall("svg:rect", ns)
+    assert len(rects) >= 2, f"Expected window rects (opening + glass), got {len(rects)}"
 
 
 # R14
 def test_window_panes():
-    """Window has line elements inside floor group (walls are now rects)."""
+    """Window has rect elements for opening and glass line."""
     window = Window(
         id="w1", position=Point(x=1000, y=0),
         width=1500.0, height=1500.0, wall_side="north",
@@ -283,9 +282,8 @@ def test_window_panes():
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor_group = root.findall(".//svg:g[@id='floor']", ns)[0]
-    lines = floor_group.findall("svg:line", ns)
-    # Walls are rects now; lines are only from windows (at least 1 window line)
-    assert len(lines) >= 1
+    rects = floor_group.findall("svg:rect", ns)
+    assert len(rects) >= 3, f"Expected >= 3 window rects, got {len(rects)}"
 
 
 # R15
@@ -522,8 +520,8 @@ def test_door_renders_bezier_arc():
 
 
 # R24
-def test_window_renders_as_line():
-    """Windows are rendered as line segments in the floor group."""
+def test_window_renders_as_rects():
+    """Windows are rendered as rect elements in the floor group."""
     window = Window(
         id="w1", position=Point(x=1000, y=0), width=1500, height=1500,
         wall_side="north",
@@ -538,9 +536,9 @@ def test_window_renders_as_line():
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
     assert floor is not None
-    lines = [el for el in floor.iter() if el.tag.endswith("line")]
-    # Should have wall lines + at least 1 window line
-    assert len(lines) >= 1, "Expected at least one line in floor group"
+    rects = [el for el in floor.iter() if el.tag.endswith("rect")]
+    # Should have at least 2 rects for window (opening + glass)
+    assert len(rects) >= 2, f"Expected at least 2 window rects, got {len(rects)}"
 
 
 # R25
@@ -649,8 +647,8 @@ def test_door_has_leaf_rect_and_arc():
 
 
 # R33
-def test_window_double_line():
-    """Window renders as two parallel lines (double glazing symbol)."""
+def test_window_opening_and_glass():
+    """Window renders as opening rect + glass line rect (reference style)."""
     window = Window(
         id="w1", position=Point(x=1000, y=0), width=1500, height=1500,
         wall_side="north",
@@ -664,14 +662,13 @@ def test_window_double_line():
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    lines = floor.findall("svg:line", ns)
-    # Should have at least 2 lines for double-glazing symbol
-    assert len(lines) >= 2, f"Expected >= 2 window lines, got {len(lines)}"
+    rects = floor.findall("svg:rect", ns)
+    assert len(rects) >= 3, f"Expected >= 3 rects for window, got {len(rects)}"
 
 
 # R34
-def test_wide_window_has_mullion():
-    """Windows wider than 1200mm have a perpendicular mullion line."""
+def test_wide_window_has_extra_mullions():
+    """Windows wider than 1200mm have additional mullion rects."""
     window = Window(
         id="w1", position=Point(x=500, y=0), width=1800, height=1500,
         wall_side="north",
@@ -685,9 +682,8 @@ def test_wide_window_has_mullion():
     root = _parse_svg(svg)
     ns = {"svg": "http://www.w3.org/2000/svg"}
     floor = root.find(".//svg:g[@id='floor']", ns)
-    lines = floor.findall("svg:line", ns)
-    # Should have 3 lines: 2 parallel + 1 mullion
-    assert len(lines) >= 3, f"Expected >= 3 lines (2 panes + mullion), got {len(lines)}"
+    rects = floor.findall("svg:rect", ns)
+    assert len(rects) >= 4, f"Expected >= 4 rects for wide window, got {len(rects)}"
 
 
 # R35

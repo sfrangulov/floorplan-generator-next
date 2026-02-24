@@ -1,4 +1,4 @@
-"""Window rendering: double-line glazing symbol with optional mullion."""
+"""Window rendering: reference-style opening rect + glass line + mullions."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from floorplan_generator.core.models import Room, Window
 from floorplan_generator.renderer.coordinate_mapper import CoordinateMapper
 from floorplan_generator.renderer.theme import Theme
 
-_MULLION_THRESHOLD_MM = 1200.0  # add mullion for windows wider than this
-_GLASS_GAP_PX = 4.0  # gap between two parallel glass lines
+_MULLION_SPACING_MM = 600.0
+_GLASS_POSITION_RATIO = 0.75
 
 
 def render_windows(
@@ -20,9 +20,10 @@ def render_windows(
     mapper: CoordinateMapper,
     theme: Theme,
 ) -> None:
+    wall_thickness = theme.walls.outer_thickness
     for room in rooms:
         for window in room.windows:
-            _render_single_window(dwg, group, window, mapper, theme)
+            _render_single_window(dwg, group, window, mapper, theme, wall_thickness)
 
 
 def _render_single_window(
@@ -31,47 +32,77 @@ def _render_single_window(
     window: Window,
     mapper: CoordinateMapper,
     theme: Theme,
+    wall_thickness: float,
 ) -> None:
-    """Render a window as two parallel lines + optional mullion."""
+    """Render window as: opening rect + glass line + mullion rects."""
     pos = mapper.to_svg(window.position)
-    length = mapper.scale_length(window.width)
-    gap = _GLASS_GAP_PX
-    sw = max(1.5, theme.windows.stroke_width)
+    w_len = mapper.scale_length(window.width)
+    w_thick = mapper.scale_length(wall_thickness)
+    sw = max(1.0, theme.windows.stroke_width)
     color = theme.windows.stroke
+
+    glass_height = max(4.0, w_thick * 0.2)
+    glass_offset = w_thick * _GLASS_POSITION_RATIO
+
+    mullion_w = max(3.0, w_thick * 0.15)
+    mullion_h = glass_height
 
     is_horizontal = window.wall_side in ("north", "south")
 
     if is_horizontal:
-        y1 = pos[1] - gap / 2
-        y2 = pos[1] + gap / 2
-        group.add(dwg.line(
-            start=(pos[0], y1), end=(pos[0] + length, y1),
-            stroke=color, stroke_width=sw,
+        ox, oy = pos[0], pos[1] - w_thick / 2
+        group.add(dwg.rect(
+            insert=(ox, oy), size=(w_len, w_thick),
+            fill="none", stroke=color, stroke_width=sw,
         ))
-        group.add(dwg.line(
-            start=(pos[0], y2), end=(pos[0] + length, y2),
-            stroke=color, stroke_width=sw,
+
+        gy = oy + glass_offset - glass_height / 2
+        group.add(dwg.rect(
+            insert=(ox, gy), size=(w_len, glass_height),
+            fill="none", stroke=color, stroke_width=sw,
         ))
-        if window.width > _MULLION_THRESHOLD_MM:
-            mid_x = pos[0] + length / 2
-            group.add(dwg.line(
-                start=(mid_x, y1 - 2), end=(mid_x, y2 + 2),
-                stroke=color, stroke_width=sw,
+
+        mullion_positions = _compute_mullion_positions(window.width, _MULLION_SPACING_MM)
+        for mp in mullion_positions:
+            mx = ox + mapper.scale_length(mp) - mullion_w / 2
+            group.add(dwg.rect(
+                insert=(mx, gy), size=(mullion_w, mullion_h),
+                fill="none", stroke=color, stroke_width=sw,
             ))
     else:
-        x1 = pos[0] - gap / 2
-        x2 = pos[0] + gap / 2
-        group.add(dwg.line(
-            start=(x1, pos[1]), end=(x1, pos[1] + length),
-            stroke=color, stroke_width=sw,
+        ox, oy = pos[0] - w_thick / 2, pos[1]
+        group.add(dwg.rect(
+            insert=(ox, oy), size=(w_thick, w_len),
+            fill="none", stroke=color, stroke_width=sw,
         ))
-        group.add(dwg.line(
-            start=(x2, pos[1]), end=(x2, pos[1] + length),
-            stroke=color, stroke_width=sw,
+
+        gx = ox + glass_offset - glass_height / 2
+        group.add(dwg.rect(
+            insert=(gx, oy), size=(glass_height, w_len),
+            fill="none", stroke=color, stroke_width=sw,
         ))
-        if window.width > _MULLION_THRESHOLD_MM:
-            mid_y = pos[1] + length / 2
-            group.add(dwg.line(
-                start=(x1 - 2, mid_y), end=(x2 + 2, mid_y),
-                stroke=color, stroke_width=sw,
+
+        mullion_positions = _compute_mullion_positions(window.width, _MULLION_SPACING_MM)
+        for mp in mullion_positions:
+            my = oy + mapper.scale_length(mp) - mullion_w / 2
+            group.add(dwg.rect(
+                insert=(gx, my), size=(mullion_h, mullion_w),
+                fill="none", stroke=color, stroke_width=sw,
             ))
+
+
+def _compute_mullion_positions(window_width_mm: float, spacing_mm: float) -> list[float]:
+    """Compute mullion positions along window width.
+
+    Always includes edge mullions (at 0 and window_width).
+    For wide windows, adds intermediate mullions every ~spacing_mm.
+    """
+    positions = [0.0, window_width_mm]
+
+    if window_width_mm > spacing_mm * 1.5:
+        n_sections = max(2, round(window_width_mm / spacing_mm))
+        step = window_width_mm / n_sections
+        for i in range(1, n_sections):
+            positions.append(step * i)
+
+    return sorted(set(positions))
