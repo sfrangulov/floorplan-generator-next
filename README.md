@@ -91,7 +91,7 @@ floorplan render [OPTIONS]
 
 ### `floorplan random-generate`
 
-Generate apartments with random class, rooms, theme, and labels. Parameters are distributed proportionally so every apartment class (4), room count (1–4), and theme (12) gets roughly equal coverage. Room labels (name + area) are toggled randomly (~50/50). Useful for creating diverse datasets in one command.
+Generate apartments with random class, rooms, theme, labels, and dimensions. Parameters are distributed proportionally so every apartment class (4), room count (1–4), and theme (12) gets roughly equal coverage. Room labels and dimension annotations are toggled randomly (~50/50 each). Seeds are spaced 10 000 apart to avoid collisions with internal restart offsets.
 
 ```
 floorplan random-generate [OPTIONS]

@@ -113,11 +113,13 @@ def random_generate(
     png: bool = typer.Option(False, "--png", help="Also export PNG renders"),
     mask: bool = typer.Option(False, "--mask", help="Also export segmentation masks"),
 ) -> None:
-    """Generate apartments with random class, rooms, theme, and labels.
+    """Generate apartments with random class, rooms, theme, labels, and dimensions.
 
     Distributes parameters proportionally across the generated count so every
     apartment class, room count (1-4), and theme gets roughly equal coverage.
-    Labels (room names + area) are toggled randomly (~50/50).
+    Labels and dimensions are toggled randomly (~50/50 each).
+    Each apartment gets a unique seed spaced 10 000 apart to avoid overlap
+    with the internal restart loop.
     """
     from floorplan_generator.generator.factory import generate_single
     from floorplan_generator.renderer.segmentation import render_mask_to_file
@@ -135,20 +137,23 @@ def random_generate(
         for cls in _ALL_CLASSES
         for rooms in _ALL_ROOMS
     ]  # 16 combos
-    schedule: list[tuple[ApartmentClass, int, str, bool]] = []
+    _BOOL_CYCLE = [True, False]
+    schedule: list[tuple[ApartmentClass, int, str, bool, bool]] = []
     for i in range(count):
         cls, rooms = combos[i % len(combos)]
         theme_name = _ALL_THEMES[i % len(_ALL_THEMES)]
-        show_labels = i % 2 == 0  # alternating → ~50/50
-        schedule.append((cls, rooms, theme_name, show_labels))
+        show_labels = _BOOL_CYCLE[i % 2]
+        show_dims = _BOOL_CYCLE[(i // 2) % 2]  # offset phase so not always correlated
+        schedule.append((cls, rooms, theme_name, show_labels, show_dims))
 
     # Shuffle with the user seed so it's reproducible but not purely cyclic
     rng = random.Random(seed)
     rng.shuffle(schedule)
 
     metadata = []
-    for i, (apt_class, num_rooms, theme_name, show_labels) in enumerate(schedule):
-        item_seed = seed + i
+    for i, (apt_class, num_rooms, theme_name, show_labels, show_dims) in enumerate(schedule):
+        # Space seeds 10 000 apart so internal restart offsets (+1000 each) never collide
+        item_seed = seed + i * 10_000
         result = generate_single(
             apt_class, num_rooms, seed=item_seed, max_restarts=max_restarts,
         )
@@ -160,11 +165,17 @@ def random_generate(
         filename = f"rand_{apt_class.value}_{num_rooms}r_{theme_name}_{i:04d}"
 
         svg_path = output / f"{filename}.svg"
-        render_svg_to_file(result, str(svg_path), theme_obj, show_labels=show_labels)
+        render_svg_to_file(
+            result, str(svg_path), theme_obj,
+            show_labels=show_labels, show_dimensions=show_dims,
+        )
 
         if png:
             png_path = output / f"{filename}.png"
-            render_png_to_file(result, str(png_path), theme_obj, show_labels=show_labels)
+            render_png_to_file(
+                result, str(png_path), theme_obj,
+                show_labels=show_labels, show_dimensions=show_dims,
+            )
 
         if mask:
             mask_path = output / f"{filename}_mask.png"
@@ -180,16 +191,19 @@ def random_generate(
             "rooms": num_rooms,
             "theme": theme_name,
             "labels": show_labels,
+            "dimensions": show_dims,
             "total_area_m2": round(result.apartment.total_area_m2, 1),
             "room_count": len(result.apartment.rooms),
             "restart_count": result.restart_count,
             "seed_used": result.seed_used,
         }
         metadata.append(entry)
-        labels_tag = "labels" if show_labels else "no-labels"
+        flags = []
+        flags.append("labels" if show_labels else "no-labels")
+        flags.append("dims" if show_dims else "no-dims")
         typer.echo(
             f"  [{i+1}/{count}] {apt_class.value}/{num_rooms}r "
-            f"theme={theme_name} {labels_tag} area={entry['total_area_m2']}m²",
+            f"theme={theme_name} {' '.join(flags)} area={entry['total_area_m2']}m²",
         )
 
     import json as _json
