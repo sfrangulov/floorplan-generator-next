@@ -9,7 +9,11 @@ from pathlib import Path
 from floorplan_generator.core.enums import ApartmentClass
 from floorplan_generator.generator.layout_engine import generate_apartment
 from floorplan_generator.generator.types import GenerationResult
-from floorplan_generator.renderer.svg_renderer import render_svg_to_file
+from floorplan_generator.renderer.segmentation import render_mask_to_file
+from floorplan_generator.renderer.svg_renderer import (
+    render_png_to_file,
+    render_svg_to_file,
+)
 from floorplan_generator.renderer.theme import Theme, load_theme
 
 logger = logging.getLogger(__name__)
@@ -35,8 +39,11 @@ def generate_dataset(
     output: Path,
     max_restarts: int = 10,
     theme: Theme | None = None,
+    *,
+    png: bool = False,
+    mask: bool = False,
 ) -> list[dict]:
-    """Generate a dataset of apartments and save SVG + metadata.
+    """Generate a dataset of apartments and save SVG + optional PNG/mask.
 
     Returns metadata list.
     """
@@ -61,6 +68,16 @@ def generate_dataset(
         # Save SVG
         svg_path = output / f"{filename}.svg"
         render_svg_to_file(result, str(svg_path), theme)
+
+        # Save PNG
+        if png:
+            png_path = output / f"{filename}.png"
+            render_png_to_file(result, str(png_path), theme)
+
+        # Save segmentation mask
+        if mask:
+            mask_path = output / f"{filename}_mask.png"
+            render_mask_to_file(result, str(mask_path), theme)
 
         # Save apartment JSON for re-rendering
         json_path = output / f"{filename}.json"

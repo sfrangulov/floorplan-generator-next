@@ -27,6 +27,8 @@ def generate(
     output: Path = typer.Option(Path("./output"), "--output", "-o", help="Output dir"),
     theme: str = typer.Option("blueprint", "--theme", "-t", help="Theme name or path"),
     max_restarts: int = typer.Option(10, "--max-restarts", help="Max restarts"),
+    png: bool = typer.Option(False, "--png", help="Also export PNG renders"),
+    mask: bool = typer.Option(False, "--mask", help="Also export segmentation masks"),
 ) -> None:
     """Generate apartment floorplans and save as SVG."""
     from floorplan_generator.generator.factory import generate_dataset
@@ -37,6 +39,8 @@ def generate(
         apartment_class, rooms, count, seed, output,
         max_restarts=max_restarts,
         theme=theme_obj,
+        png=png,
+        mask=mask,
     )
     typer.echo(f"Generated {len(metadata)} apartments in {output}")
 
@@ -52,10 +56,16 @@ def render(
     theme: str = typer.Option(
         "blueprint", "--theme", "-t", help="Theme name or path",
     ),
+    png: bool = typer.Option(False, "--png", help="Also export PNG renders"),
+    mask: bool = typer.Option(False, "--mask", help="Also export segmentation masks"),
 ) -> None:
     """Re-render apartment JSON files to SVG with a different theme."""
     from floorplan_generator.generator.types import GenerationResult
-    from floorplan_generator.renderer.svg_renderer import render_svg_to_file
+    from floorplan_generator.renderer.segmentation import render_mask_to_file
+    from floorplan_generator.renderer.svg_renderer import (
+        render_png_to_file,
+        render_svg_to_file,
+    )
     from floorplan_generator.renderer.theme import load_theme
 
     theme_obj = load_theme(theme)
@@ -69,6 +79,12 @@ def render(
         result = GenerationResult.model_validate_json(json_file.read_text())
         svg_path = output_dir / f"{json_file.stem}.svg"
         render_svg_to_file(result, str(svg_path), theme_obj)
+        if png:
+            png_path = output_dir / f"{json_file.stem}.png"
+            render_png_to_file(result, str(png_path), theme_obj)
+        if mask:
+            mask_path = output_dir / f"{json_file.stem}_mask.png"
+            render_mask_to_file(result, str(mask_path), theme_obj)
         rendered += 1
 
     typer.echo(f"Rendered {rendered} SVG files to {output_dir}")

@@ -9,6 +9,7 @@ dependencies = [
     "lxml>=5.0",
     "svgwrite>=1.4",
     "shapely>=2.0",
+    "cairosvg>=2.7",
 ]
 
 [project.optional-dependencies]
