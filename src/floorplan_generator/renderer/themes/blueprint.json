@@ -11,7 +11,7 @@
     "inner_stroke": "#000000",
     "inner_width": 1.5,
     "outer_fill": "#000000",
-    "inner_fill": "#555555",
+    "inner_fill": "#000000",
     "outer_thickness": 225.0,
     "inner_thickness": 75.0
   },
